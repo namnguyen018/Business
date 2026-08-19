@@ -36,32 +36,40 @@ def format_vnd(val):
     return f"{val:,.0f}".replace(',', '.') + ' đ'
 
 def parse_and_add_bets(customer_name, message_text):
-    raw_parts = []
-    for line in message_text.strip().split('\n'):
-        parts = line.split(',')
-        for p in parts:
-            if p.strip():
-                raw_parts.append(p.strip().lower())
-                
     added_count = 0
-    for part in raw_parts:
-        # A. Xử lý cú pháp Xiên kèm danh sách cặp và tiền (VD: Xiên 62-65,26-56 55k hoặc 62-65,26-56 55k)
-        m_multi_xien = re.search(r'(?:xiên\s*)?((?:\d{2}\s*-\s*\d{2}\s*,\s*)*\d{2}\s*-\s*\d{2})\s+(\d+)(k)?', part)
-        if m_multi_xien and ('-' in m_multi_xien.group(1)):
-            pairs_str = m_multi_xien.group(1)
-            amt = int(m_multi_xien.group(2))
-            if m_multi_xien.group(3) or amt < 1000: amt *= 1000
+    # Xử lý từng dòng độc lập để không bị lỗi ngắt dấu phẩy
+    for line in message_text.strip().split('\n'):
+        line = line.strip().lower()
+        if not line:
+            continue
             
-            # Tách các cặp xiên ra
-            pair_list = re.findall(r'(\d{2})\s*-\s*(\d{2})', pairs_str)
-            for p1, p2 in pair_list:
-                num_x2 = f"{p1}-{p2}"
-                st.session_state.bets.append({"customer": customer_name, "type": "Xiên 2", "number": num_x2, "amount": amt, "total": amt})
+        # 1. Dạng nhiều cặp xiên chung tiền trên 1 dòng (VD: Xiên 62-65,26-56 55k hoặc 62-65,26-56 55k)
+        if ',' in line and '-' in line:
+            m_amt = re.search(r'(\d+)(k)?$', line)
+            if m_amt:
+                amt = int(m_amt.group(1))
+                if m_amt.group(2) or amt < 1000: 
+                    amt *= 1000
+                # Lấy phần chữ trước số tiền để quét các cặp số
+                pairs_part = line[:m_amt.start()]
+                pair_list = re.findall(r'(\d{2})\s*-\s*(\d{2})', pairs_part)
+                for p1, p2 in pair_list:
+                    num_x2 = f"{p1}-{p2}"
+                    st.session_state.bets.append({"customer": customer_name, "type": "Xiên 2", "number": num_x2, "amount": amt, "total": amt})
+                    added_count += 1
+                continue
+
+        # 2. Dạng Lô cặp gạch ngang có chung số điểm (VD: 62-65 10đ)
+        m_pair_lo = re.match(r'^(\d{2})\s*-\s*(\d{2})\s+(\d+)\s*(đ|diem)?$', line)
+        if m_pair_lo:
+            n1, n2, pts = m_pair_lo.group(1), m_pair_lo.group(2), int(m_pair_lo.group(3))
+            for n in [n1, n2]:
+                st.session_state.bets.append({"customer": customer_name, "type": "Lô", "number": n, "amount": pts, "total": pts * LO_REV})
                 added_count += 1
             continue
 
-        # B. Dạng chuỗi 3 chữ số liên tiếp kèm tiền cuối (VD: 050 191 40k)
-        m_group_3d = re.search(r'^((?:\d{3}\s*)+)(\d+)(k)$', part)
+        # 3. Dạng chuỗi 3 chữ số liên tiếp kèm tiền cuối (VD: 050 191 40k)
+        m_group_3d = re.search(r'^((?:\d{3}\s*)+)(\d+)(k)$', line)
         if m_group_3d:
             nums_str = m_group_3d.group(1)
             amt = int(m_group_3d.group(2)) * 1000
@@ -74,17 +82,8 @@ def parse_and_add_bets(customer_name, message_text):
                     added_count += 1
             continue
 
-        # C. Dạng Lô cặp gạch ngang có chung số điểm (VD: 62-65 10đ)
-        m_pair_lo = re.search(r'^(\d{2})\s*-\s*(\d{2})\s+(\d+)(đ|diem)?$', part)
-        if m_pair_lo:
-            n1, n2, pts = m_pair_lo.group(1), m_pair_lo.group(2), int(m_pair_lo.group(3))
-            for n in [n1, n2]:
-                st.session_state.bets.append({"customer": customer_name, "type": "Lô", "number": n, "amount": pts, "total": pts * LO_REV})
-                added_count += 1
-            continue
-
-        # 1. 3 Càng đơn lẻ
-        m3c = re.search(r'3c\s*(\d{3})\s*(\d+)(k)?', part)
+        # 4. 3 Càng đơn lẻ
+        m3c = re.search(r'3c\s*(\d{3})\s*(\d+)(k)?', line)
         if m3c:
             num, amt = m3c.group(1), int(m3c.group(2))
             if m3c.group(3) or amt < 1000: amt *= 1000
@@ -92,8 +91,8 @@ def parse_and_add_bets(customer_name, message_text):
             added_count += 1
             continue
 
-        # 2. Xiên 2 đơn lẻ
-        mx2 = re.search(r'x2\s+(\d{2})\s+(\d{2})\s*(\d+)(k)?', part)
+        # 5. Xiên 2 đơn lẻ
+        mx2 = re.search(r'x2\s+(\d{2})\s+(\d{2})\s*(\d+)(k)?', line)
         if mx2:
             num = f"{mx2.group(1)}-{mx2.group(2)}"
             amt = int(mx2.group(3))
@@ -102,8 +101,8 @@ def parse_and_add_bets(customer_name, message_text):
             added_count += 1
             continue
 
-        # 3. Xiên 3
-        mx3 = re.search(r'x3\s+(\d{2})\s+(\d{2})\s+(\d{2})\s*(\d+)(k)?', part)
+        # 6. Xiên 3
+        mx3 = re.search(r'x3\s+(\d{2})\s+(\d{2})\s+(\d{2})\s*(\d+)(k)?', line)
         if mx3:
             num = f"{mx3.group(1)}-{mx3.group(2)}-{mx3.group(3)}"
             amt = int(mx3.group(4))
@@ -112,16 +111,16 @@ def parse_and_add_bets(customer_name, message_text):
             added_count += 1
             continue
 
-        # 4. Đề đơn lẻ
-        m_de = re.search(r'(?:đề|de)?\s*(\d{2})\s*(\d+)(k)', part)
+        # 7. Đề đơn lẻ
+        m_de = re.search(r'(?:đề|de)?\s*(\d{2})\s*(\d+)(k)', line)
         if m_de:
             num, amt = m_de.group(1), int(m_de.group(2)) * 1000
             st.session_state.bets.append({"customer": customer_name, "type": "Đề", "number": num, "amount": amt, "total": amt})
             added_count += 1
             continue
 
-        # 5. Lô đơn lẻ hoặc Lô + Đề gộp
-        tokens = part.split()
+        # 8. Lô đơn lẻ hoặc Lô + Đề gộp
+        tokens = line.split()
         nums = [t for t in tokens if re.match(r'^\d{2}$', t)]
         if nums:
             pts_lo = 0
@@ -159,7 +158,7 @@ col1, col2 = st.columns([1, 1])
 
 with col1:
     name = st.text_input("Tên Khách Hàng", value="đạt")
-    msg = st.text_area("Tin nhắn cược", height=120, placeholder="VD: 62-65 10đ\nXiên 62-65,26-56 55k")
+    msg = st.text_area("Tin nhắn cược", height=120, placeholder="VD:\n62-65 10đ\nXiên 62-65,26-56 55k")
     if st.button("Cập Nhật Vào Bảng", type="primary"):
         if msg.strip():
             count = parse_and_add_bets(name, msg)
