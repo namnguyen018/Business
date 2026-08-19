@@ -2,13 +2,29 @@ import streamlit as st
 import re
 import pandas as pd
 import requests
+import json
+import os
 
 st.set_page_config(page_title="Hệ Thống Quản Lý Lô Đề Master", layout="wide")
 
-if 'bets' not in st.session_state: 
-    st.session_state.bets = []
+DATA_FILE = "bets_data.json"
 
-# Cấu hình tỷ lệ tài chính
+def load_saved_data():
+    if os.path.exists(DATA_FILE):
+        try:
+            with open(DATA_FILE, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except:
+            return []
+    return []
+
+def save_data_to_file():
+    with open(DATA_FILE, "w", encoding="utf-8") as f:
+        json.dump(st.session_state.bets, f, ensure_ascii=False, indent=4)
+
+if 'bets' not in st.session_state: 
+    st.session_state.bets = load_saved_data()
+
 LO_REV = 22500  
 LO_PAY = 80000  
 DE_PAY = 70     
@@ -29,18 +45,42 @@ def parse_and_add_bets(customer_name, message_text):
                 
     added_count = 0
     for part in raw_parts:
-        # 0. Dạng chuỗi 3 chữ số liên tiếp kèm tiền cuối (VD: 050 191 40k hoặc 818 959 636 909 20k)
+        # A. Xử lý cú pháp Xiên kèm danh sách cặp và tiền (VD: Xiên 62-65,26-56 55k hoặc 62-65,26-56 55k)
+        m_multi_xien = re.search(r'(?:xiên\s*)?((?:\d{2}\s*-\s*\d{2}\s*,\s*)*\d{2}\s*-\s*\d{2})\s+(\d+)(k)?', part)
+        if m_multi_xien and ('-' in m_multi_xien.group(1)):
+            pairs_str = m_multi_xien.group(1)
+            amt = int(m_multi_xien.group(2))
+            if m_multi_xien.group(3) or amt < 1000: amt *= 1000
+            
+            # Tách các cặp xiên ra
+            pair_list = re.findall(r'(\d{2})\s*-\s*(\d{2})', pairs_str)
+            for p1, p2 in pair_list:
+                num_x2 = f"{p1}-{p2}"
+                st.session_state.bets.append({"customer": customer_name, "type": "Xiên 2", "number": num_x2, "amount": amt, "total": amt})
+                added_count += 1
+            continue
+
+        # B. Dạng chuỗi 3 chữ số liên tiếp kèm tiền cuối (VD: 050 191 40k)
         m_group_3d = re.search(r'^((?:\d{3}\s*)+)(\d+)(k)$', part)
         if m_group_3d:
             nums_str = m_group_3d.group(1)
             amt = int(m_group_3d.group(2)) * 1000
             three_digit_nums = re.findall(r'\d{3}', nums_str)
             for t_num in three_digit_nums:
-                d1 = t_num[:2]      # 2 chữ số đầu (VD: '05' từ '050')
-                d2 = d1[::-1]       # Lật ngược lại (VD: '50')
+                d1 = t_num[:2]
+                d2 = d1[::-1]
                 for n in set([d1, d2]):
                     st.session_state.bets.append({"customer": customer_name, "type": "Đề", "number": n, "amount": amt, "total": amt})
                     added_count += 1
+            continue
+
+        # C. Dạng Lô cặp gạch ngang có chung số điểm (VD: 62-65 10đ)
+        m_pair_lo = re.search(r'^(\d{2})\s*-\s*(\d{2})\s+(\d+)(đ|diem)?$', part)
+        if m_pair_lo:
+            n1, n2, pts = m_pair_lo.group(1), m_pair_lo.group(2), int(m_pair_lo.group(3))
+            for n in [n1, n2]:
+                st.session_state.bets.append({"customer": customer_name, "type": "Lô", "number": n, "amount": pts, "total": pts * LO_REV})
+                added_count += 1
             continue
 
         # 1. 3 Càng đơn lẻ
@@ -52,7 +92,7 @@ def parse_and_add_bets(customer_name, message_text):
             added_count += 1
             continue
 
-        # 2. Xiên 2
+        # 2. Xiên 2 đơn lẻ
         mx2 = re.search(r'x2\s+(\d{2})\s+(\d{2})\s*(\d+)(k)?', part)
         if mx2:
             num = f"{mx2.group(1)}-{mx2.group(2)}"
@@ -106,22 +146,32 @@ def parse_and_add_bets(customer_name, message_text):
                 if amt_de > 0:
                     st.session_state.bets.append({"customer": customer_name, "type": "Đề", "number": n, "amount": amt_de, "total": amt_de})
                     added_count += 1
+                    
+    if added_count > 0:
+        save_data_to_file()
+        
     return added_count
 
 # --- GIAO DIỆN CHÍNH ---
-st.title("📊 Hệ Thống Quản Lý Lô Đề Master")
+st.title("📊 Hệ Thống Quản Lý Lô Đề Master (Bổ Sung Cú Pháp Cặp & Xiên)")
 
 col1, col2 = st.columns([1, 1])
 
 with col1:
     name = st.text_input("Tên Khách Hàng", value="đạt")
-    msg = st.text_area("Tin nhắn cược", height=120, placeholder="VD: 050 191 40k\n818 959 636 909 20k")
+    msg = st.text_area("Tin nhắn cược", height=120, placeholder="VD: 62-65 10đ\nXiên 62-65,26-56 55k")
     if st.button("Cập Nhật Vào Bảng", type="primary"):
         if msg.strip():
             count = parse_and_add_bets(name, msg)
             if count > 0: st.success(f"Đã ghi nhận thành công {count} mục cược!")
             else: st.warning("Không nhận diện được cú pháp!")
-    if st.button("Làm mới dữ liệu"): st.session_state.bets = []
+            
+    if st.button("Làm mới/Xóa toàn bộ dữ liệu"): 
+        st.session_state.bets = []
+        if os.path.exists(DATA_FILE):
+            os.remove(DATA_FILE)
+        st.success("Đã xóa sạch dữ liệu cũ!")
+        st.rerun()
 
 with col2:
     st.header("📈 Bảng Tổng Hợp Exposure & Hedge")
@@ -167,7 +217,6 @@ if st.button("Chạy Đối Chiếu & Tính Toán Tài Chính"):
                 api_data = response.json()
                 results_dict = api_data.get("results", {})
                 
-                # Quét an toàn toàn bộ các giải trả về từ API
                 for key, val_list in results_dict.items():
                     if isinstance(val_list, list):
                         for item in val_list:
