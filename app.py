@@ -53,8 +53,8 @@ def parse_and_add_bets(customer_name, message_text):
         line = line.strip().lower()
         if not line: continue
         
-        # 1. Dạng nhiều cặp xiên chung tiền trên 1 dòng (VD: Xiên 62-65,26-56 55k hoặc 62-65,26-56 55k)
-        if ',' in line and '-' in line:
+        # 1. Dạng nhiều cặp xiên chung tiền trên 1 dòng (VD: Xiên 62-65,26-56 55k)
+        if ',' in line and '-' in line and 'xiên' in line:
             m_amt = re.search(r'(\d+)(k)?$', line)
             if m_amt:
                 amt = int(m_amt.group(1))
@@ -94,8 +94,8 @@ def parse_and_add_bets(customer_name, message_text):
             added_count += 1
             continue
 
-        # 5. Xiên 2 đơn lẻ
-        mx2 = re.search(r'x2\s+(\d{2})\s+(\d{2})\s*(\d+)(k)?', line)
+        # 5. Xiên 2 đơn lẻ (Hỗ trợ: "xiên 29 99 100k", "x2 29 99 100k", hoặc có dấu gạch ngang)
+        mx2 = re.search(r'(?:xiên|x2)\s*2?\s+(\d{2})\D+(\d{2})\D*(\d+)(k)?', line)
         if mx2:
             num = f"{mx2.group(1)}-{mx2.group(2)}"
             amt = int(mx2.group(3))
@@ -105,7 +105,7 @@ def parse_and_add_bets(customer_name, message_text):
             continue
 
         # 6. Xiên 3
-        mx3 = re.search(r'x3\s+(\d{2})\s+(\d{2})\s+(\d{2})\s*(\d+)(k)?', line)
+        mx3 = re.search(r'(?:xiên\s*3|x3)\s+(\d{2})\s+(\d{2})\s+(\d{2})\s*(\d+)(k)?', line)
         if mx3:
             num = f"{mx3.group(1)}-{mx3.group(2)}-{mx3.group(3)}"
             amt = int(mx3.group(4))
@@ -161,7 +161,7 @@ col1, col2 = st.columns([1, 1])
 
 with col1:
     name = st.text_input("Tên Khách Hàng", value="đạt")
-    msg = st.text_area("Danh mục cược", height=120, placeholder="VD:\n05 10đ\n62-65 10đ\nXiên 62-65,26-56 55k")
+    msg = st.text_area("Danh mục cược", height=120, placeholder="VD:\nXiên 29 99 100k\n05 10đ\n62-65 10đ")
     if st.button("Cập Nhật Vào Bảng", type="primary"):
         with st.spinner("Đang xử lý dữ liệu..."):
             if msg.strip():
