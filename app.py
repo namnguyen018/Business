@@ -9,12 +9,12 @@ if 'bets' not in st.session_state:
     st.session_state.bets = []
 
 # Cấu hình tỷ lệ tài chính
-LO_REV = 22500  # Doanh thu thu khách 1 điểm lô
-LO_PAY = 80000  # Trả thưởng 1 nháy lô
-DE_PAY = 70     # Đề ăn 70
-BC_PAY = 400    # 3 càng ăn 400
-X2_PAY = 10     # Xiên 2 ăn 10
-X3_PAY = 40     # Xiên 3 ăn 40
+LO_REV = 22500  
+LO_PAY = 80000  
+DE_PAY = 70     
+BC_PAY = 400    
+X2_PAY = 10     
+X3_PAY = 40     
 
 def format_vnd(val): 
     return f"{val:,.0f}".replace(',', '.') + ' đ'
@@ -95,22 +95,19 @@ def parse_and_add_bets(customer_name, message_text):
     return added_count
 
 # --- GIAO DIỆN CHÍNH ---
-st.title("📊 Hệ Thống Quản Lý Lô Đề Master (API Chuẩn JSON)")
+st.title("📊 Hệ Thống Quản Lý Lô Đề Master")
 
 col1, col2 = st.columns([1, 1])
 
 with col1:
     name = st.text_input("Tên Khách Hàng", value="đạt")
-    msg = st.text_area("Tin nhắn cược (VD: 83 20k, 3c 183 50k\n90 30đ)", height=120)
+    msg = st.text_area("Tin nhắn cược", height=120)
     if st.button("Cập Nhật Vào Bảng", type="primary"):
         if msg.strip():
             count = parse_and_add_bets(name, msg)
-            if count > 0:
-                st.success(f"Đã ghi nhận thành công {count} mục cược!")
-            else:
-                st.warning("Không nhận diện được cú pháp!")
-    if st.button("Làm mới dữ liệu"): 
-        st.session_state.bets = []
+            if count > 0: st.success(f"Đã ghi nhận {count} mục cược!")
+            else: st.warning("Không nhận diện được cú pháp!")
+    if st.button("Làm mới dữ liệu"): st.session_state.bets = []
 
 with col2:
     st.header("📈 Bảng Tổng Hợp Exposure & Hedge")
@@ -125,49 +122,28 @@ with col2:
         exp_list = []
         for k, v in exp_dict.items():
             vol = v["Tổng khối lượng"]
-            if v["Loại"] == "Lô":
-                warn = "⚠️ Ôm Lô lớn (>50đ)" if vol > 50 else "✅ An toàn"
-                disp = f"{vol} điểm"
-            else:
-                warn = "⚠️ Ôm số lớn (>500k)" if vol > 500000 else "✅ An toàn"
-                disp = format_vnd(vol)
-            exp_list.append({"Loại": v["Loại"], "Số": v["Số"], "Tổng nhận": disp, "Cảnh báo Exposure": warn})
-            
+            disp = f"{vol} điểm" if v["Loại"] == "Lô" else format_vnd(vol)
+            exp_list.append({"Loại": v["Loại"], "Số": v["Số"], "Tổng nhận": disp, "Cảnh báo": "⚠️ Lớn" if vol > 50 else "✅ An toàn"})
         st.dataframe(pd.DataFrame(exp_list), use_container_width=True)
-    else:
-        st.info("Chưa có dữ liệu tổng hợp.")
 
-# --- BẢNG CHI TIẾT LỊCH SỬ CƯỢC ---
 st.markdown("---")
-st.header("📜 Lịch Sử Cược & Chi Tiết Từng Khách")
+st.header("📜 Lịch Sử Cược Chi Tiết")
 if st.session_state.bets:
-    df_bets = []
-    for b in st.session_state.bets:
-        unit_str = f"{b['amount']} điểm" if b['type'] == "Lô" else format_vnd(b['amount'])
-        df_bets.append({
-            "Khách hàng": b['customer'],
-            "Loại": b['type'],
-            "Số đánh": b['number'],
-            "Mức cược gốc": unit_str,
-            "Thành tiền": format_vnd(b['total'])
-        })
+    df_bets = [{"Khách hàng": b['customer'], "Loại": b['type'], "Số đánh": b['number'], "Thành tiền": format_vnd(b['total'])} for b in st.session_state.bets]
     st.dataframe(pd.DataFrame(df_bets), use_container_width=True)
-else:
-    st.info("Chưa có dữ liệu cược.")
 
-# --- ĐỐI CHIẾU KẾT QUẢ TỪ API CHUẨN JSON ---
+# --- ĐỐI CHIẾU TỰ ĐỘNG API ---
 st.markdown("---")
 st.header("🏁 Đối Chiếu Kết Quả Xổ Số Tự Động (API JSON)")
 
 api_url = "https://api-xsmb-today.onrender.com/api/v1"
-use_api = st.checkbox("Sử dụng dữ liệu tự động từ API kết quả trực tuyến", value=True)
-manual_res = st.text_input("Hoặc dán kết quả thủ công dạng text (nếu API lỗi)", value="")
+use_api = st.checkbox("Sử dụng dữ liệu tự động từ API trực tuyến", value=True)
+manual_res = st.text_input("Hoặc dán kết quả thủ công (phòng hờ API lỗi)", value="")
 
 if st.button("Chạy Đối Chiếu & Tính Toán Tài Chính"):
     res_2d = []
     so_de = ""
     so_3c = ""
-    
     success_load = False
     
     if use_api:
@@ -177,36 +153,40 @@ if st.button("Chạy Đối Chiếu & Tính Toán Tài Chính"):
                 api_data = response.json()
                 results_dict = api_data.get("results", {})
                 
-                # 1. Lấy chuẩn Giải Đặc Biệt cho Đề và 3 Càng
-                db_list = results_dict.get("ĐB", [])
-                if db_list:
-                    giai_db = db_list[0]
-                    so_de = giai_db[-2:]
-                    so_3c = giai_db[-3:]
+                # Quét an toàn toàn bộ các giải trả về từ API bất kể tên key hoa/thường
+                for key, val_list in results_dict.items():
+                    if isinstance(val_list, list):
+                        for item in val_list:
+                            # Lấy 2 số cuối của mọi giải cho Lô
+                            res_2d.append(item[-2:])
+                            # Nếu là giải Đặc Biệt (hoặc key chứa chữ đb / db), lấy làm Đề và 3 càng
+                            if "đb" in key.lower() or "db" in key.lower() or key == "ĐB":
+                                so_de = item[-2:]
+                                so_3c = item[-3:]
                 
-                # 2. Gom tất cả số từ các giải để làm mảng đối chiếu Lô và Xiên
-                for prize_name, prize_values in results_dict.items():
-                    for val in prize_values:
-                        res_2d.append(val[-2:])
-                
+                # Nếu không tìm thấy key ĐB tường minh, lấy phần tử đầu tiên làm Đề/3c mặc định
+                if not so_de and results_dict:
+                    first_key = list(results_dict.keys())[0]
+                    if results_dict[first_key]:
+                        so_de = results_dict[first_key][0][-2:]
+                        so_3c = results_dict[first_key][0][-3:]
+
                 success_load = True
-                st.success(f"Đã lấy dữ liệu chuẩn từ API! Giải ĐB là: {db_list[0] if db_list else 'Không rõ'}")
-            else:
-                st.warning("API phản hồi lỗi, hệ thống chuyển sang dữ liệu thủ công.")
+                st.success(f"Đã lấy dữ liệu API thành công! Số Đề (2 số cuối giải ĐB): {so_de}")
         except Exception as e:
             st.error(f"Lỗi kết nối API: {e}")
 
-    # Nếu không dùng API hoặc API lỗi, fallback về nhập thủ công
+    # Fallback thủ công nếu không gọi được API
     if not success_load and manual_res.strip():
         all_nums = re.findall(r'\d{2,}', manual_res)
         res_2d = [n[-2:] for n in all_nums]
         if res_2d:
             so_de = res_2d[0]
-            so_3c = manual_res[-3:] # Lấy tạm 3 số cuối nếu nhập tay
+            so_3c = manual_res[-3:]
             success_load = True
 
     if not success_load or not res_2d:
-        st.warning("Chưa có dữ liệu kết quả hợp lệ để đối chiếu. Vui lòng kiểm tra lại kết nối API hoặc nhập thủ công.")
+        st.warning("Chưa có dữ liệu kết quả hợp lệ để đối chiếu.")
     else:
         fin = {}
         total_lo_profit = 0
@@ -215,20 +195,16 @@ if st.button("Chạy Đối Chiếu & Tính Toán Tài Chính"):
         
         for b in st.session_state.bets:
             cust = b['customer']
-            if cust not in fin: 
-                fin[cust] = {"bet": 0, "win": 0}
+            if cust not in fin: fin[cust] = {"bet": 0, "win": 0}
             fin[cust]["bet"] += b['total']
             
             win = 0
             if b['type'] == "Lô":
-                hits = res_2d.count(b['number'])
-                win = hits * b['amount'] * LO_PAY
+                win = res_2d.count(b['number']) * b['amount'] * LO_PAY
             elif b['type'] == "Đề":
-                if b['number'] == so_de:
-                    win = b['amount'] * DE_PAY
+                if b['number'] == so_de: win = b['amount'] * DE_PAY
             elif b['type'] == "3 càng":
-                if b['number'] == so_3c:
-                    win = b['amount'] * BC_PAY
+                if b['number'] == so_3c: win = b['amount'] * BC_PAY
             elif b['type'] == "Xiên 2":
                 parts = b['number'].split('-')
                 if len(parts) == 2 and parts[0] in res_2d and parts[1] in res_2d:
@@ -240,47 +216,32 @@ if st.button("Chạy Đối Chiếu & Tính Toán Tài Chính"):
                     
             fin[cust]["win"] += win
             
-            # Phân định tài chính Chủ & NCC
             if b['type'] == "Lô":
                 total_lo_profit += ((b['amount'] * LO_REV) - win)
             else: 
                 total_ncc_revenue += b['total']
                 total_ncc_payout += win
 
-        # Hiển thị thông tin NCC
         ncc_profit = total_ncc_revenue - total_ncc_payout
         st.subheader("🏢 Thông Tin Chuyển Nhà Cung Cấp (NCC)")
-        col_n1, col_n2, col_n3 = st.columns(3)
-        with col_n1:
-            st.metric("Tổng tiền chuyển NCC (Đề/3c/Xiên)", format_vnd(total_ncc_revenue))
-        with col_n2:
-            st.metric("Tiền trúng NCC hoàn trả", format_vnd(total_ncc_payout))
-        with col_n3:
-            st.metric("Lợi nhuận mảng chuyển NCC", format_vnd(ncc_profit))
+        c_n1, c_n2, c_n3 = st.columns(3)
+        with c_n1: st.metric("Tổng tiền chuyển NCC", format_vnd(total_ncc_revenue))
+        with c_n2: st.metric("Tiền trúng NCC hoàn trả", format_vnd(total_ncc_payout))
+        with c_n3: st.metric("Lợi nhuận mảng NCC", format_vnd(ncc_profit))
 
-        # Hiển thị công nợ khách
         st.subheader("📋 Bảng Công Nợ Chi Tiết Khách Cuối Ngày")
         debt_list = []
         for c, v in fin.items():
             net = v['bet'] - v['win']
             status = f"🟢 Khách phải TRẢ: {format_vnd(net)}" if net > 0 else f"🔴 Chủ phải TRẢ KHÁCH: {format_vnd(abs(net))}"
             if net == 0: status = "⚪ Hòa vốn (0 đ)"
-            debt_list.append({
-                "Khách hàng": c,
-                "Tổng cược": format_vnd(v['bet']),
-                "Tổng trúng": format_vnd(v['win']),
-                "Trạng thái": status
-            })
+            debt_list.append({"Khách hàng": c, "Tổng cược": format_vnd(v['bet']), "Tổng trúng": format_vnd(v['win']), "Trạng thái": status})
         st.dataframe(pd.DataFrame(debt_list), use_container_width=True)
         
-        # Tổng kết lãi lỗ chủ lô
         st.divider()
         st.subheader("📈 Tổng Kết Lợi Nhuận Thực Tế Chủ Lô")
         total_master_profit = total_lo_profit + ncc_profit
         c1, c2, c3 = st.columns(3)
-        with c1:
-            st.metric("Lãi/Lỗ mảng Lô (Ôm)", format_vnd(total_lo_profit))
-        with c2:
-            st.metric("Lãi/Lỗ mảng NCC (Đề/3c/Xiên)", format_vnd(ncc_profit))
-        with c3:
-            st.metric("Tổng lãi/lỗ thực tế", format_vnd(total_master_profit), delta=format_vnd(total_master_profit))
+        with c1: st.metric("Lãi/Lỗ mảng Lô", format_vnd(total_lo_profit))
+        with c2: st.metric("Lãi/Lỗ mảng NCC", format_vnd(ncc_profit))
+        with c3: st.metric("Tổng lãi/lỗ thực tế", format_vnd(total_master_profit), delta=format_vnd(total_master_profit))
