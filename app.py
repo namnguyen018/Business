@@ -94,7 +94,7 @@ def parse_and_add_bets(customer_name, message_text):
             added_count += 1
             continue
 
-        # 5. Xiên 2 đơn lẻ (Hỗ trợ: "Xiên 29 99 100k", "x2 29 99 100k", v.v.)
+        # 5. Xiên 2 đơn lẻ
         mx2 = re.search(r'(?:xiên|x2)\s*2?\s+(\d{2})\D+(\d{2})\D*(\d+)(k)?', line)
         if mx2:
             num = f"{mx2.group(1)}-{mx2.group(2)}"
@@ -181,11 +181,6 @@ with col1:
 with col2:
     st.header("📈 Bảng Tổng Hợp")
     if st.session_state.bets:
-        # Tổng hợp tổng điểm Lô khách đánh
-        total_lo_pts = sum(b['amount'] for b in st.session_state.bets if b['type'] == 'Lô')
-        if total_lo_pts > 0:
-            st.metric("Tổng khối lượng Lô khách đánh", f"{total_lo_pts} điểm")
-            
         exp_dict = {}
         for b in st.session_state.bets:
             key = (b['type'], b['number'])
@@ -202,8 +197,19 @@ with col2:
 
 st.markdown("---")
 st.header("📜 Lịch Sử Cược Chi Tiết & Quản Lý")
+
 if st.session_state.bets:
-    # Hiển thị dạng bảng trực quan kèm nút xóa từng dòng
+    # --- THÊM PHẦN TÍNH VÀ HIỂN THỊ TỔNG CỘNG TIỀN LÔ ---
+    total_lo_pts = sum(b['amount'] for b in st.session_state.bets if b['type'] == 'Lô')
+    total_lo_money = sum(b['total'] for b in st.session_state.bets if b['type'] == 'Lô')
+    
+    col_m1, col_m2 = st.columns(2)
+    with col_m1:
+        st.metric("Tổng điểm Lô khách đánh", f"{total_lo_pts} điểm")
+    with col_m2:
+        st.metric("Tổng thành tiền Lô", format_vnd(total_lo_money))
+    
+    st.markdown("---")
     st.markdown("Bấm vào nút **🗑️** ở dòng tương ứng để xóa mục cược đó.")
     
     header_cols = st.columns([1.5, 1, 1.5, 2, 2, 0.8])
