@@ -29,7 +29,21 @@ def parse_and_add_bets(customer_name, message_text):
                 
     added_count = 0
     for part in raw_parts:
-        # 1. 3 Càng
+        # 0. Dạng chuỗi 3 chữ số liên tiếp kèm tiền cuối (VD: 050 191 40k hoặc 818 959 636 909 20k)
+        m_group_3d = re.search(r'^((?:\d{3}\s*)+)(\d+)(k)$', part)
+        if m_group_3d:
+            nums_str = m_group_3d.group(1)
+            amt = int(m_group_3d.group(2)) * 1000
+            three_digit_nums = re.findall(r'\d{3}', nums_str)
+            for t_num in three_digit_nums:
+                d1 = t_num[:2]      # 2 chữ số đầu (VD: '05' từ '050')
+                d2 = d1[::-1]       # Lật ngược lại (VD: '50')
+                for n in set([d1, d2]):
+                    st.session_state.bets.append({"customer": customer_name, "type": "Đề", "number": n, "amount": amt, "total": amt})
+                    added_count += 1
+            continue
+
+        # 1. 3 Càng đơn lẻ
         m3c = re.search(r'3c\s*(\d{3})\s*(\d+)(k)?', part)
         if m3c:
             num, amt = m3c.group(1), int(m3c.group(2))
@@ -101,11 +115,11 @@ col1, col2 = st.columns([1, 1])
 
 with col1:
     name = st.text_input("Tên Khách Hàng", value="đạt")
-    msg = st.text_area("Tin nhắn cược", height=120)
+    msg = st.text_area("Tin nhắn cược", height=120, placeholder="VD: 050 191 40k\n818 959 636 909 20k")
     if st.button("Cập Nhật Vào Bảng", type="primary"):
         if msg.strip():
             count = parse_and_add_bets(name, msg)
-            if count > 0: st.success(f"Đã ghi nhận {count} mục cược!")
+            if count > 0: st.success(f"Đã ghi nhận thành công {count} mục cược!")
             else: st.warning("Không nhận diện được cú pháp!")
     if st.button("Làm mới dữ liệu"): st.session_state.bets = []
 
@@ -129,7 +143,7 @@ with col2:
 st.markdown("---")
 st.header("📜 Lịch Sử Cược Chi Tiết")
 if st.session_state.bets:
-    df_bets = [{"Khách hàng": b['customer'], "Loại": b['type'], "Số đánh": b['number'], "Thành tiền": format_vnd(b['total'])} for b in st.session_state.bets]
+    df_bets = [{"Khách hàng": b['customer'], "Loại": b['type'], "Số đánh": b['number'], "Mức cược": f"{b['amount']} điểm" if b['type']=="Lô" else format_vnd(b['amount']), "Thành tiền": format_vnd(b['total'])} for b in st.session_state.bets]
     st.dataframe(pd.DataFrame(df_bets), use_container_width=True)
 
 # --- ĐỐI CHIẾU TỰ ĐỘNG API ---
@@ -153,18 +167,15 @@ if st.button("Chạy Đối Chiếu & Tính Toán Tài Chính"):
                 api_data = response.json()
                 results_dict = api_data.get("results", {})
                 
-                # Quét an toàn toàn bộ các giải trả về từ API bất kể tên key hoa/thường
+                # Quét an toàn toàn bộ các giải trả về từ API
                 for key, val_list in results_dict.items():
                     if isinstance(val_list, list):
                         for item in val_list:
-                            # Lấy 2 số cuối của mọi giải cho Lô
                             res_2d.append(item[-2:])
-                            # Nếu là giải Đặc Biệt (hoặc key chứa chữ đb / db), lấy làm Đề và 3 càng
                             if "đb" in key.lower() or "db" in key.lower() or key == "ĐB":
                                 so_de = item[-2:]
                                 so_3c = item[-3:]
                 
-                # Nếu không tìm thấy key ĐB tường minh, lấy phần tử đầu tiên làm Đề/3c mặc định
                 if not so_de and results_dict:
                     first_key = list(results_dict.keys())[0]
                     if results_dict[first_key]:
@@ -176,7 +187,6 @@ if st.button("Chạy Đối Chiếu & Tính Toán Tài Chính"):
         except Exception as e:
             st.error(f"Lỗi kết nối API: {e}")
 
-    # Fallback thủ công nếu không gọi được API
     if not success_load and manual_res.strip():
         all_nums = re.findall(r'\d{2,}', manual_res)
         res_2d = [n[-2:] for n in all_nums]
