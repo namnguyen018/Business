@@ -5,7 +5,7 @@ import requests
 import json
 import os
 
-st.set_page_config(page_title="Hệ Thống Quản Lý Lô Đề Master", layout="wide")
+st.set_page_config(page_title="Hệ Thống Quản Trị Rủi Ro Tài Chính", layout="wide")
 
 DATA_FILE = "bets_data.json"
 
@@ -152,7 +152,7 @@ def parse_and_add_bets(customer_name, message_text):
     return added_count
 
 # --- GIAO DIỆN CHÍNH ---
-st.title("📊 Hệ Thống Quản Lý Lô Đề Master (Bổ Sung Cú Pháp Cặp & Xiên)")
+st.title("📊 Hệ Thống Quản Trị Rủi Ro Tài Chính")
 
 col1, col2 = st.columns([1, 1])
 
@@ -297,7 +297,7 @@ if st.button("Chạy Đối Chiếu & Tính Toán Tài Chính"):
         st.dataframe(pd.DataFrame(debt_list), use_container_width=True)
         
         st.divider()
-        st.subheader("📈 Tổng Kết Lợi Nhuận Thực Tế Chủ Lô")
+        st.subheader("📈 Tổng Kết Lợi Nhuận Thực Tế")
         total_master_profit = total_lo_profit + ncc_profit
         c1, c2, c3 = st.columns(3)
         with c1: st.metric("Lãi/Lỗ mảng Lô", format_vnd(total_lo_profit))
