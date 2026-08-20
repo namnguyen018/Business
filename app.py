@@ -159,8 +159,15 @@ def parse_and_add_bets(customer_name, message_text):
         
     return added_count
 
-# --- TIÊU ĐỀ ỨNG DỤNG ---
+# --- TIÊU ĐỀ & BANNER CÔNG NGHỆ ---
 st.title("📊 Hệ Thống Quản Trị Rủi Ro Tài Chính")
+
+# Thêm banner công nghệ / tài chính hiện đại
+st.image(
+    "https://images.unsplash.com/photo-1639762681485-074b7f938ba0?auto=format&fit=crop&w=1400&q=80",
+    use_container_width=True,
+    caption="Smart Financial Analytics & Risk Management System"
+)
 
 # --- PHÂN CHIA GIAO DIỆN BẰNG TABS ---
 tab1, tab2, tab3 = st.tabs(["📥 Nhập liệu & Biểu đồ tổng quan", "📜 Quản lý công nợ khách hàng", "🏁 Đối chiếu kết quả & Lợi nhuận"])
@@ -196,7 +203,6 @@ with tab1:
     with col_chart:
         st.subheader("📈 Phân tích nhanh khối lượng")
         if st.session_state.bets:
-            # Gom nhóm dữ liệu theo loại cược để vẽ biểu đồ trực quan
             type_summary = {}
             for b in st.session_state.bets:
                 t = b['type']
@@ -224,7 +230,6 @@ with tab2:
         
         st.divider()
         
-        # Nhóm dữ liệu theo từng khách hàng và hiển thị dạng Thẻ (Card container)
         customers_dict = {}
         for i, b in enumerate(st.session_state.bets):
             cust = b['customer']
@@ -268,7 +273,6 @@ with tab2:
                         st.toast(f"Đã xóa một mục cược của {cust}!", icon="⚠️")
                         st.rerun()
                         
-                # Dòng tổng kết riêng của khách
                 summary_html = f'<div style="background-color: #e6f4ea; padding: 10px; border-radius: 5px; margin-top: 15px; font-weight: bold; color: #137333; border: 1px solid #ceead6;">📊 Tổng kết {cust}: {cust_lo_pts} điểm Lô ({format_vnd(cust_lo_money)}) | Ngoài Lô: {format_vnd(cust_other_money)} | Tổng cộng: {format_vnd(cust_lo_money + cust_other_money)}</div>'
                 st.markdown(summary_html, unsafe_allow_html=True)
 
