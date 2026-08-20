@@ -12,7 +12,7 @@ st.set_page_config(page_title="Hệ Thống Forecast Chứng Khoán & Tài Chín
 if 'authenticated' not in st.session_state:
     st.session_state.authenticated = False
 
-# --- MÀN HÌNH ĐĂNG NHẬP NỀN HIGH-TECH ĐỘNG ---
+# --- MÀN HÌNH ĐĂNG NHẬP HIGH-TECH ---
 if not st.session_state.authenticated:
     st.markdown("""
         <style>
@@ -21,28 +21,19 @@ if not st.session_state.authenticated:
         header {visibility: hidden;}
         
         .stApp {
-            background: #030712;
-        }
-        
-        /* Canvas nền hiệu ứng high-tech chuyển động */
-        #tech-canvas {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 0;
-            pointer-events: none;
+            background: linear-gradient(rgba(3, 7, 18, 0.75), rgba(3, 7, 18, 0.85)), 
+                        url('https://images.unsplash.com/photo-1639762681485-074b7f938ba0?auto=format&fit=crop&w=1920&q=80');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
         }
 
         .login-container {
-            position: relative;
-            z-index: 10;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            margin-top: 5vh;
+            margin-top: 4vh;
         }
 
         .login-card {
@@ -50,8 +41,8 @@ if not st.session_state.authenticated:
             padding: 40px;
             border-radius: 16px;
             box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
             border: 1px solid rgba(59, 130, 246, 0.3);
             max-width: 450px;
             width: 100%;
@@ -86,66 +77,6 @@ if not st.session_state.authenticated:
         }
         </style>
 
-        <!-- Canvas tạo hiệu ứng mạng lưới dữ liệu High-Tech chạy động -->
-        <canvas id="tech-canvas"></canvas>
-        <script>
-        const canvas = document.getElementById('tech-canvas');
-        const ctx = canvas.getContext('2d');
-        
-        let width = canvas.width = window.innerWidth;
-        let height = canvas.height = window.innerHeight;
-        
-        window.addEventListener('resize', () => {
-            width = canvas.width = window.innerWidth;
-            height = canvas.height = window.innerHeight;
-        });
-
-        const particles = [];
-        const particleCount = Math.floor(width / 15);
-
-        for (let i = 0; i < particleCount; i++) {
-            particles.push({
-                x: Math.random() * width,
-                y: Math.random() * height,
-                vx: (Math.random() - 0.5) * 1.2,
-                vy: (Math.random() - 0.5) * 1.2,
-                radius: Math.random() * 2 + 1
-            });
-        }
-
-        function animate() {
-            ctx.clearRect(0, 0, width, height);
-            ctx.fillStyle = 'rgba(59, 130, 246, 0.6)';
-            ctx.strokeStyle = 'rgba(59, 130, 246, 0.15)';
-
-            particles.forEach((p, index) => {
-                p.x += p.vx;
-                p.y += p.vy;
-
-                if (p.x < 0 || p.x > width) p.vx *= -1;
-                if (p.y < 0 || p.y > height) p.vy *= -1;
-
-                ctx.beginPath();
-                ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-                ctx.fill();
-
-                for (let j = index + 1; j < particles.length; j++) {
-                    const p2 = particles[j];
-                    const dist = Math.hypot(p.x - p2.x, p.y - p2.y);
-                    if (dist < 120) {
-                        ctx.lineWidth = 1 - (dist / 120);
-                        ctx.beginPath();
-                        ctx.moveTo(p.x, p.y);
-                        ctx.lineTo(p2.x, p2.y);
-                        ctx.stroke();
-                    }
-                }
-            });
-            requestAnimationFrame(animate);
-        }
-        animate();
-        </script>
-
         <div class="login-container">
             <div class="login-card">
                 <div class="login-title">📈 Hệ thống forecast chứng khoán</div>
@@ -170,7 +101,8 @@ if not st.session_state.authenticated:
                 else:
                     st.error("❌ Tên đăng nhập hoặc mật khẩu không chính xác!")
     
-    st.stop() # Dừng chạy các phần code phía dưới nếu chưa đăng nhập
+    st.stop()
+
 
 # ==========================================
 # TRANG CHÍNH SAU KHI ĐĂNG NHẬP THÀNH CÔNG
@@ -225,7 +157,7 @@ def parse_and_add_bets(customer_name, message_text):
         line = line.strip().lower()
         if not line: continue
         
-        # 1. Dạng nhiều cặp xiên chung tiền trên 1 dòng (VD: Xiên 62-65,26-56 55k)
+        # 1. Dạng nhiều cặp xiên chung tiền trên 1 dòng
         if ',' in line and '-' in line and 'xiên' in line:
             m_amt = re.search(r'(\d+)(k)?$', line)
             if m_amt:
@@ -237,7 +169,7 @@ def parse_and_add_bets(customer_name, message_text):
                     added_count += 1
                 continue
 
-        # 2. Dạng Lô cặp gạch ngang có chung số điểm (VD: 62-65 10đ)
+        # 2. Dạng Lô cặp gạch ngang có chung số điểm
         m_pair_lo = re.match(r'^(\d{2})\s*-\s*(\d{2})\s+(\d+)\s*(đ|diem)?$', line)
         if m_pair_lo:
             n1, n2, pts = m_pair_lo.group(1), m_pair_lo.group(2), int(m_pair_lo.group(3))
@@ -246,7 +178,7 @@ def parse_and_add_bets(customer_name, message_text):
                 added_count += 1
             continue
 
-        # 3. Dạng chuỗi 3 chữ số liên tiếp kèm tiền cuối (VD: 050 636 959 20k đề)
+        # 3. Dạng chuỗi 3 chữ số liên tiếp kèm tiền cuối
         m_group_3d = re.search(r'^((?:\d{3}\s*)+)(\d+)\s*(k)?(?:\s*đề)?$', line)
         if m_group_3d:
             nums_str = m_group_3d.group(1)
@@ -295,7 +227,7 @@ def parse_and_add_bets(customer_name, message_text):
             added_count += 1
             continue
 
-        # 8. Lô đơn lẻ hoặc Lô + Đề gộp (VD: 05 10đ)
+        # 8. Lô đơn lẻ hoặc Lô + Đề gộp
         tokens = line.split()
         nums = [t for t in tokens if re.match(r'^\d{2}$', t)]
         if nums:
@@ -327,7 +259,7 @@ def parse_and_add_bets(customer_name, message_text):
         
     return added_count
 
-# --- TIÊU ĐỀ & BANNER CÔNG NGHỆ TRANG CHÍNH ---
+# --- TIÊU ĐỀ & BANNER TRANG CHÍNH ---
 st.title("📊 Hệ Thống Quản Trị Rủi Ro Tài Chính")
 st.image(
     "https://images.unsplash.com/photo-1639762681485-074b7f938ba0?auto=format&fit=crop&w=1400&q=80",
