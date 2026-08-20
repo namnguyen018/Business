@@ -12,64 +12,62 @@ st.set_page_config(page_title="Hệ Thống Forecast Chứng Khoán & Tài Chín
 if 'authenticated' not in st.session_state:
     st.session_state.authenticated = False
 
-# --- MÀN HÌNH ĐĂNG NHẬP VỚI VIDEO NỀN HIGH-TECH ---
+# --- MÀN HÌNH ĐĂNG NHẬP NỀN HIGH-TECH ĐỘNG ---
 if not st.session_state.authenticated:
-    # CSS và HTML nhúng video nền động
     st.markdown("""
         <style>
-        /* Ẩn các thành phần mặc định của streamlit trên trang login */
         #MainMenu {visibility: hidden;}
         footer {visibility: hidden;}
         header {visibility: hidden;}
         
         .stApp {
-            background: transparent;
+            background: #030712;
         }
         
-        /* Video nền full màn hình */
-        .bg-video {
-            position: fixed;
-            right: 0;
-            bottom: 0;
-            min-width: 100%;
-            min-height: 100%;
-            object-fit: cover;
-            z-index: -1;
-        }
-        
-        /* Lớp phủ tối mờ giúp nổi bật khung đăng nhập */
-        .video-overlay {
+        /* Canvas nền hiệu ứng high-tech chuyển động */
+        #tech-canvas {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(5, 10, 25, 0.65);
-            z-index: -1;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .login-container {
+            position: relative;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin-top: 5vh;
         }
 
         .login-card {
-            background: rgba(15, 23, 42, 0.75);
+            background: rgba(15, 23, 42, 0.85);
             padding: 40px;
             border-radius: 16px;
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.3);
             max-width: 450px;
-            margin: 60px auto 20px auto;
+            width: 100%;
             text-align: center;
+            margin-bottom: 20px;
         }
         .login-title {
             color: #ffffff;
-            font-size: 26px;
+            font-size: 24px;
             font-weight: 700;
             margin-bottom: 10px;
             letter-spacing: 0.5px;
         }
         .login-subtitle {
             color: #94a3b8;
-            font-size: 14px;
+            font-size: 13px;
             margin-bottom: 20px;
         }
         div.stButton > button:first-child {
@@ -84,20 +82,75 @@ if not st.session_state.authenticated:
         }
         div.stButton > button:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.5);
         }
         </style>
 
-        <!-- Video nền High-Tech chạy lặp tự động -->
-        <video autoplay muted loop class="bg-video">
-            <source src="https://assets.mixkit.co/videos/preview/mixkit-digital-animation-of-screens-with-code-and-graphs-31915-large.mp4" type="video/mp4">
-            Trình duyệt của bạn không hỗ trợ thẻ video.
-        </video>
-        <div class="video-overlay"></div>
+        <!-- Canvas tạo hiệu ứng mạng lưới dữ liệu High-Tech chạy động -->
+        <canvas id="tech-canvas"></canvas>
+        <script>
+        const canvas = document.getElementById('tech-canvas');
+        const ctx = canvas.getContext('2d');
+        
+        let width = canvas.width = window.innerWidth;
+        let height = canvas.height = window.innerHeight;
+        
+        window.addEventListener('resize', () => {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        });
 
-        <div class="login-card">
-            <div class="login-title">📈 Hệ thống forecast chứng khoán</div>
-            <div class="login-subtitle">Vui lòng xác thực quyền truy cập bảo mật cao</div>
+        const particles = [];
+        const particleCount = Math.floor(width / 15);
+
+        for (let i = 0; i < particleCount; i++) {
+            particles.push({
+                x: Math.random() * width,
+                y: Math.random() * height,
+                vx: (Math.random() - 0.5) * 1.2,
+                vy: (Math.random() - 0.5) * 1.2,
+                radius: Math.random() * 2 + 1
+            });
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, width, height);
+            ctx.fillStyle = 'rgba(59, 130, 246, 0.6)';
+            ctx.strokeStyle = 'rgba(59, 130, 246, 0.15)';
+
+            particles.forEach((p, index) => {
+                p.x += p.vx;
+                p.y += p.vy;
+
+                if (p.x < 0 || p.x > width) p.vx *= -1;
+                if (p.y < 0 || p.y > height) p.vy *= -1;
+
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                ctx.fill();
+
+                for (let j = index + 1; j < particles.length; j++) {
+                    const p2 = particles[j];
+                    const dist = Math.hypot(p.x - p2.x, p.y - p2.y);
+                    if (dist < 120) {
+                        ctx.lineWidth = 1 - (dist / 120);
+                        ctx.beginPath();
+                        ctx.moveTo(p.x, p.y);
+                        ctx.lineTo(p2.x, p2.y);
+                        ctx.stroke();
+                    }
+                }
+            });
+            requestAnimationFrame(animate);
+        }
+        animate();
+        </script>
+
+        <div class="login-container">
+            <div class="login-card">
+                <div class="login-title">📈 Hệ thống forecast chứng khoán</div>
+                <div class="login-subtitle">Vui lòng xác thực quyền truy cập bảo mật cao</div>
+            </div>
         </div>
     """, unsafe_allow_html=True)
 
