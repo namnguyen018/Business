@@ -423,30 +423,30 @@ with tab1:
                 for num, pts in lo_summary.items():
                     payout_if_hit = pts * LO_PAY 
                     chart_data.append({
-                        "Số": str(num),
-                        "Điểm": pts,
-                        "Tiền Trả Nếu Về (1 Nháy)": payout_if_hit
+                        "so": str(num),
+                        "diem": pts,
+                        "payout": payout_if_hit
                     })
                 
                 df_chart = pd.DataFrame(chart_data)
-                df_chart = df_chart.sort_values("Điểm", ascending=False)
+                df_chart = df_chart.sort_values("diem", ascending=False)
                 
                 # Gán màu sắc: Đỏ nếu payout >= 80% tổng thu lô, ngược lại màu Xanh dương (#3b82f6)
                 colors = []
-                for payout in df_chart["Tiền Trả Nếu Về (1 Nháy)"]:
+                for payout in df_chart["payout"]:
                     if total_lo_revenue > 0 and (payout >= total_lo_revenue * 0.8):
                         colors.append("#ef4444") # Đỏ cảnh báo
                     else:
                         colors.append("#3b82f6") # Xanh dương
                 
-                df_chart["Màu"] = colors
+                df_chart["color"] = colors
                 
-                # Vẽ bằng Altair tích hợp sẵn trong Streamlit
+                # Vẽ bằng Altair tích hợp sẵn trong Streamlit (dùng tên trường không dấu để tránh lỗi cú pháp)
                 chart = alt.Chart(df_chart).mark_bar().encode(
-                    x=alt.X('Số:N', sort=None, title='Con Số Lô'),
-                    y=alt.Y('Tiền Trả Nếu Về (1 Nháy):Q', title='Số Tiền Phải Trả (1 Nháy)'),
-                    color=alt.Color('Màu:N', scale=None),
-                    tooltip=['Số', 'Điểm', 'Tiền Trả Если Về (1 Nháy)']
+                    x=alt.X('so:N', sort=None, title='Con Số Lô'),
+                    y=alt.Y('payout:Q', title='Số Tiền Phải Trả (1 Nháy)'),
+                    color=alt.Color('color:N', scale=None),
+                    tooltip=['so', 'diem', 'payout']
                 ).properties(
                     height=380,
                     title=f"Tổng thu Lô: {format_vnd(total_lo_revenue)} (Cột đỏ = Rủi ro cao)"
