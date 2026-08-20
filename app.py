@@ -74,11 +74,12 @@ def parse_and_add_bets(customer_name, message_text):
                 added_count += 1
             continue
 
-        # 3. Dạng chuỗi 3 chữ số liên tiếp kèm tiền cuối (VD: 050 191 40k)
-        m_group_3d = re.search(r'^((?:\d{3}\s*)+)(\d+)(k)$', line)
+        # 3. Dạng chuỗi 3 chữ số liên tiếp kèm tiền cuối (VD: 050 636 959 525 616 20k đề)
+        m_group_3d = re.search(r'^((?:\d{3}\s*)+)(\d+)\s*(k)?(?:\s*đề)?$', line)
         if m_group_3d:
             nums_str = m_group_3d.group(1)
-            amt = int(m_group_3d.group(2)) * 1000
+            raw_amt = int(m_group_3d.group(2))
+            amt = raw_amt * 1000 if (m_group_3d.group(3) or raw_amt < 1000) else raw_amt
             for t_num in re.findall(r'\d{3}', nums_str):
                 for n in set([t_num[:2], t_num[:2][::-1]]):
                     st.session_state.bets.append({"customer": customer_name, "type": "Đề", "number": n, "amount": amt, "total": amt})
@@ -161,7 +162,7 @@ col1, col2 = st.columns([1, 1])
 
 with col1:
     name = st.text_input("Tên Khách Hàng", value="đạt")
-    msg = st.text_area("Danh mục cược", height=120, placeholder="VD:\nXiên 29 99 100k\n05 10đ\n62-65 10đ")
+    msg = st.text_area("Danh mục cược", height=120, placeholder="VD:\nXiên 29 99 100k\n05 10đ\n62-65 10đ\n050 636 959 20k đề")
     if st.button("Cập Nhật Vào Bảng", type="primary"):
         with st.spinner("Đang xử lý dữ liệu..."):
             if msg.strip():
@@ -254,7 +255,7 @@ if st.session_state.bets:
                 st.success("Đã xóa mục cược!")
                 st.rerun()
                 
-        # Dòng tổng tô đậm tách riêng tiền Lô và tiền khác ngoài Lô (Dùng chuỗi đơn, không thụt lề)
+        # Dòng tổng tô đậm tách riêng tiền Lô và tiền khác ngoài Lô
         summary_html = f'<div style="background-color: #e6f4ea; padding: 10px; border-radius: 5px; margin-bottom: 25px; font-weight: bold; color: #137333; border: 1px solid #ceead6;">📊 Tổng kết của {cust}: {cust_lo_pts} điểm Lô ({format_vnd(cust_lo_money)}) | Tiền ngoài Lô (Đề/Xiên/...): {format_vnd(cust_other_money)} | Tổng cộng: {format_vnd(cust_lo_money + cust_other_money)}</div>'
         st.markdown(summary_html, unsafe_allow_html=True)
 
@@ -358,7 +359,6 @@ if st.button("Chạy Đối Chiếu & Tính Toán"):
 
             st.subheader("📋 Bảng Công Nợ Chi Tiết Khách Cuối Ngày")
             
-            # Xây dựng bảng HTML dạng một chuỗi liền mạch để tránh bị Markdown hiểu nhầm là Code Block
             html_parts = [
                 '<style>',
                 '.debt-table { width: 100%; border-collapse: collapse; font-family: sans-serif; margin-top: 10px; margin-bottom: 20px; }',
@@ -391,7 +391,6 @@ if st.button("Chạy Đối Chiếu & Tính Toán"):
             
             html_parts.append('</tbody></table>')
             
-            # Gộp lại thành 1 chuỗi hoàn chỉnh không có khoảng trắng đầu dòng gây lỗi code block
             final_html_table = "".join(html_parts)
             st.markdown(final_html_table, unsafe_allow_html=True)
             
