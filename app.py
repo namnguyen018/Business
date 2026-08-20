@@ -5,6 +5,7 @@ import requests
 import json
 import os
 from datetime import datetime
+import plotly.express as px
 
 # --- CẤU HÌNH GIAO DIỆN ---
 st.set_page_config(page_title="Hệ Thống Quản Trị & Forecast Chứng Khoán", layout="wide")
@@ -370,7 +371,7 @@ with st.sidebar:
 tab1, tab2, tab3, tab4 = st.tabs(["📥 Nhập liệu & Phân tích", "📜 Quản lý công nợ", "🏁 Đối chiếu & Lợi nhuận", "💰 Doanh thu"])
 
 with tab1:
-    col_input, col_stats = st.columns([1, 1.2], gap="large")
+    col_input, col_stats = st.columns([1, 1.3], gap="large")
     
     with col_input:
         st.subheader("✍️ Nhập Danh Mục Cược")
@@ -399,35 +400,71 @@ with tab1:
                 st.rerun()
 
     with col_stats:
-        st.subheader("📊 Phân Tích Số Đã Đánh & Khối Lượng")
+        st.subheader("📊 Biểu Đồ Phân Tích Rủi Ro Lô (Exposure)")
         if not st.session_state.bets:
             st.info("Chưa có dữ liệu cược. Hãy nhập dữ liệu ở khung bên trái.")
         else:
-            # Tổng hợp các số theo loại và điểm/tiền
-            stats_summary = {}
-            for b in st.session_state.bets:
-                key = (b['type'], b['number'])
-                if key not in stats_summary:
-                    stats_summary[key] = {"count_unit": 0, "total_money": 0}
-                if b['type'] == 'Lô':
-                    stats_summary[key]["count_unit"] += b['amount'] # điểm
-                else:
-                    stats_summary[key]["count_unit"] += 1 # số lần đánh
-                stats_summary[key]["total_money"] += b['total']
+            # Lọc riêng phần Lô để trực quan hóa biểu đồ theo yêu cầu
+            lo_bets = [b for b in st.session_state.bets if b['type'] == 'Lô']
             
-            # Đưa vào dataframe hiển thị
-            stat_rows = []
-            for (t, num), vals in stats_summary.items():
-                unit_label = f"{vals['count_unit']} điểm" if t == 'Lô' else f"{vals['count_unit']} lần"
-                stat_rows.append({
-                    "Loại": t,
-                    "Số đánh": num,
-                    "Khối lượng": unit_label,
-                    "Thành tiền": format_vnd(vals['total_money'])
-                })
-            
-            df_stats = pd.DataFrame(stat_rows)
-            st.dataframe(df_stats, use_container_width=True, hide_index=True)
+            if not lo_bets:
+                st.info("Chưa có dữ liệu cược Lô nào để hiển thị biểu đồ.")
+            else:
+                # Tính tổng tiền khách đánh Lô hôm đó làm căn cứ quy chiếu rủi ro
+                total_lo_revenue = sum(b['total'] for b in lo_bets)
+                
+                # Tổng hợp số điểm/tiền theo từng con số Lô
+                lo_summary = {}
+                for b in lo_bets:
+                    num = b['number']
+                    pts = b['amount'] # số điểm
+                    if num not in lo_summary:
+                        lo_summary[num] = 0
+                    lo_summary[num] += pts
+                
+                chart_data = []
+                for num, pts in lo_summary.items():
+                    # Số tiền phải trả nếu con số đó về 1 nháy (1 điểm = 80.000đ)
+                    payout_if_hit = pts * LO_PAY 
+                    chart_data.append({
+                        "Số": str(num),
+                        "Điểm": pts,
+                        "Tiền Trả Nếu Về (1 Nháy)": payout_if_hit
+                    })
+                
+                df_chart = pd.DataFrame(chart_data)
+                df_chart = df_chart.sort_values("Điểm", ascending=False)
+                
+                # Xác định màu: nếu payout_if_hit gần bằng hoặc vượt tổng tiền khách đánh lô thì tô ĐỎ, còn lại màu VÀNG/XANH
+                colors = []
+                for payout in df_chart["Tiền Trả Nếu Về (1 Nháy)"]:
+                    if total_lo_revenue > 0 and (payout >= total_lo_revenue * 0.8): # Ngưỡng rủi ro cao (>= 80% tổng thu hoặc lớn hơn)
+                        colors.append("#ef4444") # Đỏ cảnh báo
+                    else:
+                        colors.append("#3b82f6") # Xanh dương / Vàng chủ đạo (#f59e0b)
+                
+                df_chart["Màu"] = colors
+                
+                fig = px.bar(
+                    df_chart, 
+                    x="Số", 
+                    y="Tiền Trả Nếu Về (1 Nháy)",
+                    text=df_chart["Điểm"].astype(str) + " đ",
+                    title=f"Tổng thu Lô: {format_vnd(total_lo_revenue)} (Cột đỏ = Rủi ro cao)"
+                )
+                
+                fig.update_traces(marker_color=df_chart["Màu"], textposition='outside')
+                fig.update_layout(
+                    paper_bgcolor="rgba(0,0,0,0)",
+                    plot_bgcolor="rgba(0,0,0,0)",
+                    font_color="white",
+                    xaxis_title="Con Số Lô",
+                    yaxis_title="Số Tiền Phải Trả (1 Nháy)",
+                    margin=dict(t=40, b=20, l=20, r=20),
+                    height=380
+                )
+                
+                st.plotly_chart(fig, use_container_width=True)
 
     st.markdown("---")
     st.markdown("### 💡 Các Tiện Ích Phân Tích Mở Rộng")
