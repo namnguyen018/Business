@@ -12,7 +12,7 @@ st.set_page_config(page_title="Hệ Thống Forecast Chứng Khoán & Tài Chín
 if 'authenticated' not in st.session_state:
     st.session_state.authenticated = False
 
-# --- MÀN HÌNH ĐĂNG NHẬP VỚI VIDEO NỀN HIGH-TECH ---
+# --- MÀN HÌNH ĐĂNG NHẬP VỚI NỀN ĐỘNG HIGH-TECH (CSS ANIMATION) ---
 if not st.session_state.authenticated:
     st.markdown("""
         <style>
@@ -20,30 +20,17 @@ if not st.session_state.authenticated:
         footer {visibility: hidden;}
         header {visibility: hidden;}
         
+        /* Hiệu ứng nền động chuyển màu liên tục siêu mượt */
+        @keyframes gradientAnimation {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
         .stApp {
-            background: transparent;
-        }
-        
-        /* Video nền động full màn hình */
-        .bg-video {
-            position: fixed;
-            right: 0;
-            bottom: 0;
-            min-width: 100%;
-            min-height: 100%;
-            object-fit: cover;
-            z-index: -1;
-        }
-        
-        /* Lớp phủ tối mờ để nổi bật khung đăng nhập */
-        .video-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(3, 7, 18, 0.75);
-            z-index: -1;
+            background: linear-gradient(-45deg, #030712, #0f172a, #1d4ed8, #090d16);
+            background-size: 400% 400%;
+            animation: gradientAnimation 15s ease infinite;
         }
 
         .login-container {
@@ -51,19 +38,17 @@ if not st.session_state.authenticated:
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            margin-top: 4vh;
-            position: relative;
-            z-index: 10;
+            margin-top: 6vh;
         }
 
         .login-card {
             background: rgba(15, 23, 42, 0.85);
             padding: 40px;
             border-radius: 16px;
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.6);
             backdrop-filter: blur(14px);
             -webkit-backdrop-filter: blur(14px);
-            border: 1px solid rgba(59, 130, 246, 0.3);
+            border: 1px solid rgba(59, 130, 246, 0.4);
             max-width: 450px;
             width: 100%;
             text-align: center;
@@ -96,12 +81,6 @@ if not st.session_state.authenticated:
             box-shadow: 0 6px 20px rgba(59, 130, 246, 0.5);
         }
         </style>
-
-        <!-- Video nền công nghệ cao chạy động -->
-        <video autoplay muted loop playsinline class="bg-video">
-            <source src="https://assets.mixkit.co/videos/preview/mixkit-digital-animation-of-screens-with-code-and-graphs-31915-large.mp4" type="video/mp4">
-        </video>
-        <div class="video-overlay"></div>
 
         <div class="login-container">
             <div class="login-card">
