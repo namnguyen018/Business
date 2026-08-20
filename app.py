@@ -134,7 +134,7 @@ def parse_and_add_bets(customer_name, message_text):
     return added_count
 
 # ==========================================
-# 1. GIAO DIỆN ĐĂNG NHẬP (HERO BANNER STYLE)
+# 1. GIAO DIỆN ĐĂNG NHẬP (FULL BACKGROUND CHÌM)
 # ==========================================
 if not st.session_state.authenticated:
     st.markdown("""
@@ -143,39 +143,42 @@ if not st.session_state.authenticated:
         footer {visibility: hidden;}
         header {visibility: hidden;}
         
+        /* Hình nền chìm phủ toàn bộ màn hình với lớp tối mờ */
         .stApp {
-            background-color: #111827;
+            background: linear-gradient(rgba(11, 15, 25, 0.90), rgba(11, 15, 25, 0.94)), 
+                        url('https://images.unsplash.com/photo-1639762681485-074b7f938ba0?auto=format&fit=crop&w=1600&q=80');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
             color: #ffffff;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
         }
 
-        /* Hero Banner Container */
+        /* Hero Banner */
         .hero-banner {
-            position: relative;
-            background: linear-gradient(rgba(17, 24, 39, 0.75), rgba(17, 24, 39, 0.85)), 
-                        url('https://images.unsplash.com/photo-1639762681485-074b7f938ba0?auto=format&fit=crop&w=1600&q=80');
-            background-size: cover;
-            background-position: center;
-            padding: 80px 20px 60px 20px;
+            background: rgba(17, 24, 39, 0.75);
+            padding: 50px 20px 40px 20px;
             text-align: center;
             border-bottom: 4px solid #f59e0b;
             margin-bottom: 30px;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
         }
 
         .hero-title {
-            font-size: 3.2rem;
+            font-size: 2.8rem;
             font-weight: 800;
             color: #ffffff;
             letter-spacing: 2px;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
             text-transform: uppercase;
         }
 
         .hero-subtitle {
-            font-size: 1.1rem;
+            font-size: 1rem;
             color: #d1d5db;
             letter-spacing: 1px;
-            margin-bottom: 25px;
+            margin-bottom: 20px;
             font-weight: 400;
         }
 
@@ -183,37 +186,31 @@ if not st.session_state.authenticated:
             display: inline-block;
             background-color: #f59e0b;
             color: #111827;
-            padding: 10px 24px;
+            padding: 8px 20px;
             font-weight: 700;
             border-radius: 4px;
             text-transform: uppercase;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             letter-spacing: 1px;
             box-shadow: 0 4px 14px rgba(245, 158, 11, 0.4);
         }
 
-        /* Card Container cho Form đăng nhập */
-        .login-card-wrapper {
-            display: flex;
-            justify-content: center;
-            align-items: center;
+        /* Đồng bộ tuyệt đối màu nút bấm Form đăng nhập */
+        div.stFormSubmitButton > button {
+            width: 100% !important;
+            background-color: #f59e0b !important;
+            color: #111827 !important;
+            border: none !important;
+            padding: 12px !important;
+            border-radius: 6px !important;
+            font-weight: 700 !important;
+            text-transform: uppercase !important;
+            transition: all 0.3s ease !important;
         }
-        
-        div.stButton > button:first-child {
-            width: 100%;
-            background-color: #f59e0b;
-            color: #111827;
-            border: none;
-            padding: 12px;
-            border-radius: 6px;
-            font-weight: 700;
-            text-transform: uppercase;
-            transition: all 0.3s ease;
-        }
-        div.stButton > button:hover {
-            background-color: #d97706;
-            color: #ffffff;
-            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+        div.stFormSubmitButton > button:hover {
+            background-color: #d97706 !important;
+            color: #ffffff !important;
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.5) !important;
         }
         </style>
 
@@ -243,19 +240,22 @@ if not st.session_state.authenticated:
 
 
 # ==========================================
-# 2. GIAO DIỆN TRANG CHÍNH (CONSTRUCTION THEME UI)
+# 2. GIAO DIỆN TRANG CHÍNH (SAU KHI ĐĂNG NHẬP)
 # ==========================================
 st.markdown("""
     <style>
     .stApp {
-        background-color: #f9fafb;
-        color: #1f2937;
+        background: linear-gradient(rgba(15, 23, 42, 0.92), rgba(15, 23, 42, 0.95)), 
+                    url('https://images.unsplash.com/photo-1639762681485-074b7f938ba0?auto=format&fit=crop&w=1600&q=80');
+        background-size: cover;
+        background-position: center;
+        background-attachment: fixed;
+        color: #f3f4f6;
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     }
     
-    /* Top Brand Navbar */
     .top-nav {
-        background-color: #111827;
+        background-color: rgba(17, 24, 39, 0.9);
         padding: 15px 30px;
         display: flex;
         justify-content: space-between;
@@ -263,6 +263,7 @@ st.markdown("""
         color: white;
         border-bottom: 3px solid #f59e0b;
         margin-bottom: 30px;
+        backdrop-filter: blur(8px);
     }
     .brand-logo {
         font-size: 1.2rem;
@@ -274,36 +275,36 @@ st.markdown("""
         color: #f59e0b;
     }
     
-    /* Card Phong cách Construction Mẫu */
     .custom-card {
-        background: #ffffff;
+        background: rgba(30, 41, 59, 0.85);
         padding: 20px;
         border-radius: 8px;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        border: 1px solid #e5e7eb;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(245, 158, 11, 0.3);
         margin-bottom: 20px;
+        backdrop-filter: blur(6px);
         transition: transform 0.2s;
     }
     .custom-card:hover {
         transform: translateY(-3px);
-        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        border-color: rgba(245, 158, 11, 0.8);
     }
     .card-title {
         font-size: 1.1rem;
         font-weight: 700;
-        color: #111827;
+        color: #ffffff;
         margin-bottom: 8px;
     }
     .card-desc {
         font-size: 0.9rem;
-        color: #4b5563;
+        color: #94a3b8;
         line-height: 1.5;
         margin-bottom: 15px;
     }
     .card-link {
         font-size: 0.85rem;
         font-weight: 700;
-        color: #d97706;
+        color: #f59e0b;
         text-transform: uppercase;
         letter-spacing: 0.5px;
     }
@@ -311,25 +312,25 @@ st.markdown("""
 
     <div class="top-nav">
         <div class="brand-logo">📊 FORECAST <span>SYSTEM</span></div>
-        <div style="font-size: 0.9rem; color: #9ca3af;">Xin chào, <b>spass122</b></div>
+        <div style="font-size: 0.9rem; color: #94a3b8;">Xin chào, <b>spass122</b></div>
     </div>
 """, unsafe_allow_html=True)
 
-# Hero Section Banner chính trong trang quản trị
 st.markdown("""
     <div style="
-        background: linear-gradient(rgba(17, 24, 39, 0.8), rgba(17, 24, 39, 0.85)), 
-                    url('https://images.unsplash.com/photo-1639762681485-074b7f938ba0?auto=format&fit=crop&w=1600&q=80');
+        background: linear-gradient(rgba(17, 24, 39, 0.85), rgba(17, 24, 39, 0.9));
         background-size: cover;
         background-position: center;
-        padding: 50px 20px;
+        padding: 40px 20px;
         text-align: center;
         border-radius: 8px;
         color: white;
         margin-bottom: 30px;
+        border: 1px solid rgba(245, 158, 11, 0.3);
+        backdrop-filter: blur(8px);
     ">
-        <h1 style="font-size: 2.2rem; font-weight: 800; margin-bottom: 10px; color: #ffffff;">HỆ THỐNG QUẢN TRỊ TÀI CHÍNH & RỦI RO</h1>
-        <p style="font-size: 1rem; color: #d1d5db; margin-bottom: 20px;">Xây dựng giải pháp phân tích dữ liệu và tối ưu hóa vận hành thông minh</p>
+        <h1 style="font-size: 2rem; font-weight: 800; margin-bottom: 10px; color: #ffffff;">HỆ THỐNG QUẢN TRỊ TÀI CHÍNH & RỦI RO</h1>
+        <p style="font-size: 0.95rem; color: #94a3b8; margin-bottom: 20px;">Xây dựng giải pháp phân tích dữ liệu và tối ưu hóa vận hành thông minh</p>
         <div style="display: inline-block; background-color: #f59e0b; color: #111827; padding: 8px 20px; font-weight: 700; border-radius: 4px; font-size: 0.85rem; text-transform: uppercase;">Trung Tâm Điều Hành</div>
     </div>
 """, unsafe_allow_html=True)
@@ -341,7 +342,6 @@ with st.sidebar:
         st.session_state.authenticated = False
         st.rerun()
 
-# --- HỆ THỐNG TAB NỘI DUNG CHÍNH ---
 tab1, tab2, tab3 = st.tabs(["📥 Nhập liệu & Phân tích", "📜 Quản lý công nợ", "🏁 Đối chiếu & Lợi nhuận"])
 
 with tab1:
@@ -389,7 +389,6 @@ with tab1:
     st.markdown("---")
     st.markdown("### 💡 Các Tiện Ích Phân Tích Mở Rộng")
     
-    # Bố cục 3 thẻ card chuẩn phong cách mẫu ảnh
     cc1, cc2, cc3 = st.columns(3)
     with cc1:
         st.markdown("""
@@ -475,7 +474,7 @@ with tab2:
                         st.toast(f"Đã xóa một mục của {cust}!", icon="⚠️")
                         st.rerun()
                         
-                summary_html = f'<div style="background-color: #fef3c7; padding: 10px; border-radius: 5px; margin-top: 15px; font-weight: bold; color: #92400e; border: 1px solid #fde68a;">📊 Tổng kết {cust}: {cust_lo_pts} điểm Lô ({format_vnd(cust_lo_money)}) | Ngoài Lô: {format_vnd(cust_other_money)} | Tổng cộng: {format_vnd(cust_lo_money + cust_other_money)}</div>'
+                summary_html = f'<div style="background-color: rgba(30, 41, 59, 0.9); padding: 10px; border-radius: 5px; margin-top: 15px; font-weight: bold; color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.4);">📊 Tổng kết {cust}: {cust_lo_pts} điểm Lô ({format_vnd(cust_lo_money)}) | Ngoài Lô: {format_vnd(cust_other_money)} | Tổng cộng: {format_vnd(cust_lo_money + cust_other_money)}</div>'
                 st.markdown(summary_html, unsafe_allow_html=True)
 
 with tab3:
@@ -583,8 +582,8 @@ with tab3:
                 html_parts = [
                     '<style>',
                     '.debt-table { width: 100%; border-collapse: collapse; font-family: sans-serif; margin-top: 10px; margin-bottom: 20px; }',
-                    '.debt-table th { background-color: #f3f4f6; color: #111827; padding: 10px; border: 1px solid #e5e7eb; text-align: left; }',
-                    '.debt-table td { padding: 8px 10px; border: 1px solid #e5e7eb; color: #374151; }',
+                    '.debt-table th { background-color: #1e293b; color: #f3f4f6; padding: 10px; border: 1px solid #334155; text-align: left; }',
+                    '.debt-table td { padding: 8px 10px; border: 1px solid #334155; color: #e2e8f0; background-color: rgba(15, 23, 42, 0.6); }',
                     '</style>',
                     '<table class="debt-table">',
                     '<thead><tr><th>Khách hàng</th><th>Loại cược</th><th>Số đánh</th><th>Mức cược</th><th>Thành tiền</th><th>Trúng thưởng</th></tr></thead>',
@@ -599,16 +598,16 @@ with tab3:
                     net = data["total_bet"] - data["total_win"]
                     if net > 0:
                         status_str = f"🟢 Khách phải TRẢ: {format_vnd(net)}"
-                        row_bg = "#ecfdf5"
+                        row_bg = "rgba(6, 78, 59, 0.7)"
                     elif net < 0:
                         status_str = f"🔴 Chủ phải TRẢ KHÁCH: {format_vnd(abs(net))}"
-                        row_bg = "#fef2f2"
+                        row_bg = "rgba(127, 29, 29, 0.7)"
                     else:
                         status_str = "⚪ Hòa vốn (0 đ)"
-                        row_bg = "#f9fafb"
+                        row_bg = "rgba(30, 41, 59, 0.7)"
                     
                     summary_text = f"Tổng cược: {format_vnd(data['total_bet'])} | Tổng trúng: {format_vnd(data['total_win'])} | {status_str}"
-                    html_parts.append(f'<tr style="background-color: {row_bg}; font-weight: bold;"><td colspan="6" style="text-align: right; padding: 12px; color: #111;">👤 {cust} — {summary_text}</td></tr>')
+                    html_parts.append(f'<tr style="background-color: {row_bg}; font-weight: bold;"><td colspan="6" style="text-align: right; padding: 12px; color: #fff;">👤 {cust} — {summary_text}</td></tr>')
                 
                 html_parts.append('</tbody></table>')
                 st.markdown("".join(html_parts), unsafe_allow_html=True)
