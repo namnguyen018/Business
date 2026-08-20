@@ -441,15 +441,22 @@ with tab1:
                 
                 df_chart["color"] = colors
                 
-                # Vẽ bằng Altair tích hợp sẵn trong Streamlit (dùng tên trường không dấu để tránh lỗi cú pháp)
-                chart = alt.Chart(df_chart).mark_bar().encode(
-                    x=alt.X('so:N', sort=None, title='Con Số Lô'),
-                    y=alt.Y('payout:Q', title='Số Tiền Phải Trả (1 Nháy)'),
+                # Vẽ biểu đồ Altair với nền trong suốt (transparent) hòa hợp hoàn toàn với dark mode
+                chart = alt.Chart(df_chart).mark_bar(cornerRadiusTopLeft=4, cornerRadiusTopRight=4).encode(
+                    x=alt.X('so:N', sort=None, title='Con Số Lô', axis=alt.Axis(labelColor='#cbd5e1', titleColor='#f3f4f6', labelAngle=0)),
+                    y=alt.Y('payout:Q', title='Số Tiền Phải Trả (1 Nháy)', axis=alt.Axis(labelColor='#cbd5e1', titleColor='#f3f4f6', gridColor='rgba(255, 255, 255, 0.08)')),
                     color=alt.Color('color:N', scale=None),
                     tooltip=['so', 'diem', 'payout']
                 ).properties(
                     height=380,
-                    title=f"Tổng thu Lô: {format_vnd(total_lo_revenue)} (Cột đỏ = Rủi ro cao)"
+                    title=alt.TitleParams(
+                        text=f"Tổng thu Lô: {format_vnd(total_lo_revenue)} (Cột đỏ = Rủi ro cao)",
+                        color='#ffffff',
+                        fontSize=14
+                    )
+                ).configure(
+                    background='transparent',
+                    view=alt.ViewConfig(stroke=None)
                 )
                 
                 st.altair_chart(chart, use_container_width=True)
