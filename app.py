@@ -12,17 +12,42 @@ st.set_page_config(page_title="Hệ Thống Forecast Chứng Khoán & Tài Chín
 if 'authenticated' not in st.session_state:
     st.session_state.authenticated = False
 
-# --- MÀN HÌNH ĐĂNG NHẬP HIGH-TECH ---
+# --- MÀN HÌNH ĐĂNG NHẬP VỚI VIDEO NỀN HIGH-TECH ---
 if not st.session_state.authenticated:
-    # CSS tùy chỉnh cho màn hình đăng nhập với video/ảnh nền và hiệu ứng kính mờ (glassmorphism)
+    # CSS và HTML nhúng video nền động
     st.markdown("""
         <style>
+        /* Ẩn các thành phần mặc định của streamlit trên trang login */
+        #MainMenu {visibility: hidden;}
+        footer {visibility: hidden;}
+        header {visibility: hidden;}
+        
         .stApp {
-            background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.7)), 
-                        url('https://images.unsplash.com/photo-1639762681485-074b7f938ba0?auto=format&fit=crop&w=1920&q=80');
-            background-size: cover;
-            background-position: center;
+            background: transparent;
         }
+        
+        /* Video nền full màn hình */
+        .bg-video {
+            position: fixed;
+            right: 0;
+            bottom: 0;
+            min-width: 100%;
+            min-height: 100%;
+            object-fit: cover;
+            z-index: -1;
+        }
+        
+        /* Lớp phủ tối mờ giúp nổi bật khung đăng nhập */
+        .video-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(5, 10, 25, 0.65);
+            z-index: -1;
+        }
+
         .login-card {
             background: rgba(15, 23, 42, 0.75);
             padding: 40px;
@@ -32,7 +57,7 @@ if not st.session_state.authenticated:
             -webkit-backdrop-filter: blur(12px);
             border: 1px solid rgba(255, 255, 255, 0.1);
             max-width: 450px;
-            margin: 80px auto;
+            margin: 60px auto 20px auto;
             text-align: center;
         }
         .login-title {
@@ -45,7 +70,7 @@ if not st.session_state.authenticated:
         .login-subtitle {
             color: #94a3b8;
             font-size: 14px;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
         }
         div.stButton > button:first-child {
             width: 100%;
@@ -62,14 +87,21 @@ if not st.session_state.authenticated:
             box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
         }
         </style>
-        
+
+        <!-- Video nền High-Tech chạy lặp tự động -->
+        <video autoplay muted loop class="bg-video">
+            <source src="https://assets.mixkit.co/videos/preview/mixkit-digital-animation-of-screens-with-code-and-graphs-31915-large.mp4" type="video/mp4">
+            Trình duyệt của bạn không hỗ trợ thẻ video.
+        </video>
+        <div class="video-overlay"></div>
+
         <div class="login-card">
             <div class="login-title">📈 Hệ thống forecast chứng khoán</div>
             <div class="login-subtitle">Vui lòng xác thực quyền truy cập bảo mật cao</div>
         </div>
     """, unsafe_allow_html=True)
 
-    # Khung nhập thông tin đăng nhập nằm chính giữa màn hình
+    # Khung form nhập thông tin đăng nhập
     col_l1, col_l2, col_l3 = st.columns([1, 1.2, 1])
     with col_l2:
         with st.form("login_form"):
