@@ -4,6 +4,7 @@ import pandas as pd
 import requests
 import json
 import os
+import textwrap
 
 # --- CẤU HÌNH GIAO DIỆN ---
 st.set_page_config(page_title="Hệ Thống Quản Trị Rủi Ro Tài Chính", layout="wide")
@@ -255,11 +256,11 @@ if st.session_state.bets:
                 st.rerun()
                 
         # Dòng tổng tô đậm tách riêng tiền Lô và tiền khác ngoài Lô
-        st.markdown(f"""
-<div style="background-color: #e6f4ea; padding: 10px; border-radius: 5px; margin-bottom: 25px; font-weight: bold; color: #137333; border: 1px solid #ceead6;">
-    📊 Tổng kết của {cust}: {cust_lo_pts} điểm Lô ({format_vnd(cust_lo_money)}) | Tiền ngoài Lô (Đề/Xiên/...): {format_vnd(cust_other_money)} | Tổng cộng: {format_vnd(cust_lo_money + cust_other_money)}
-</div>
-""", unsafe_allow_html=True)
+        st.markdown(textwrap.dedent(f"""
+        <div style="background-color: #e6f4ea; padding: 10px; border-radius: 5px; margin-bottom: 25px; font-weight: bold; color: #137333; border: 1px solid #ceead6;">
+            📊 Tổng kết của {cust}: {cust_lo_pts} điểm Lô ({format_vnd(cust_lo_money)}) | Tiền ngoài Lô (Đề/Xiên/...): {format_vnd(cust_other_money)} | Tổng cộng: {format_vnd(cust_lo_money + cust_other_money)}
+        </div>
+        """), unsafe_allow_html=True)
 
 # --- ĐỐI CHIẾU KẾT QUẢ ---
 st.markdown("---")
@@ -362,38 +363,38 @@ if st.button("Chạy Đối Chiếu & Tính Toán"):
             st.subheader("📋 Bảng Công Nợ Chi Tiết Khách Cuối Ngày")
             
             html_table = """
-<style>
-.debt-table { width: 100%; border-collapse: collapse; font-family: sans-serif; margin-top: 10px; margin-bottom: 20px; }
-.debt-table th { background-color: #f0f2f6; color: #31333F; padding: 10px; border: 1px solid #d6d6d6; text-align: left; }
-.debt-table td { padding: 8px 10px; border: 1px solid #d6d6d6; color: #31333F; }
-</style>
-<table class="debt-table">
-    <thead>
-        <tr>
-            <th>Khách hàng</th>
-            <th>Loại cược</th>
-            <th>Số đánh</th>
-            <th>Mức cược</th>
-            <th>Thành tiền</th>
-            <th>Trúng thưởng</th>
-        </tr>
-    </thead>
-    <tbody>
-"""
+            <style>
+            .debt-table { width: 100%; border-collapse: collapse; font-family: sans-serif; margin-top: 10px; margin-bottom: 20px; }
+            .debt-table th { background-color: #f0f2f6; color: #31333F; padding: 10px; border: 1px solid #d6d6d6; text-align: left; }
+            .debt-table td { padding: 8px 10px; border: 1px solid #d6d6d6; color: #31333F; }
+            </style>
+            <table class="debt-table">
+                <thead>
+                    <tr>
+                        <th>Khách hàng</th>
+                        <th>Loại cược</th>
+                        <th>Số đánh</th>
+                        <th>Mức cược</th>
+                        <th>Thành tiền</th>
+                        <th>Trúng thưởng</th>
+                    </tr>
+                </thead>
+                <tbody>
+            """
             
             for cust, data in customer_detailed_results.items():
                 for b in data["bets"]:
                     m_cuoc = f"{b['amount']} điểm" if b['type']=="Lô" else format_vnd(b['amount'])
                     html_table += f"""
-        <tr>
-            <td><b>{cust}</b></td>
-            <td>{b['type']}</td>
-            <td>{b['number']}</td>
-            <td>{m_cuoc}</td>
-            <td>{format_vnd(b['total'])}</td>
-            <td>{format_vnd(b['win_amount'])}</td>
-        </tr>
-"""
+                    <tr>
+                        <td><b>{cust}</b></td>
+                        <td>{b['type']}</td>
+                        <td>{b['number']}</td>
+                        <td>{m_cuoc}</td>
+                        <td>{format_vnd(b['total'])}</td>
+                        <td>{format_vnd(b['win_amount'])}</td>
+                    </tr>
+                    """
                 
                 net = data["total_bet"] - data["total_win"]
                 if net > 0:
@@ -409,18 +410,18 @@ if st.button("Chạy Đối Chiếu & Tính Toán"):
                 summary_text = f"Tổng cược: {format_vnd(data['total_bet'])} | Tổng trúng: {format_vnd(data['total_win'])} | {status_str}"
                 
                 html_table += f"""
-        <tr style="background-color: {row_bg}; font-weight: bold;">
-            <td colspan="6" style="text-align: right; padding: 12px; color: #111;">
-                👤 {cust} — {summary_text}
-            </td>
-        </tr>
-"""
+                <tr style="background-color: {row_bg}; font-weight: bold;">
+                    <td colspan="6" style="text-align: right; padding: 12px; color: #111;">
+                        👤 {cust} — {summary_text}
+                    </td>
+                </tr>
+                """
             
             html_table += """
-    </tbody>
-</table>
-"""
-            st.markdown(html_table, unsafe_allow_html=True)
+                </tbody>
+            </table>
+            """
+            st.markdown(textwrap.dedent(html_table), unsafe_allow_html=True)
             
             st.divider()
             st.subheader("📈 Tổng Kết Lợi Nhuận Thực Tế")
