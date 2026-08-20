@@ -6,132 +6,11 @@ import json
 import os
 
 # --- CẤU HÌNH GIAO DIỆN ---
-st.set_page_config(page_title="Hệ Thống Forecast Chứng Khoán & Tài Chính", layout="wide")
+st.set_page_config(page_title="Hệ Thống Quản Trị & Forecast Chứng Khoán", layout="wide")
 
-# Khởi tạo trạng thái đăng nhập trong session
+# Khởi tạo trạng thái đăng nhập
 if 'authenticated' not in st.session_state:
     st.session_state.authenticated = False
-
-# --- MÀN HÌNH ĐĂNG NHẬP VỚI NỀN ĐỘNG HIGH-TECH (CSS ANIMATION) ---
-if not st.session_state.authenticated:
-    st.markdown("""
-        <style>
-        #MainMenu {visibility: hidden;}
-        footer {visibility: hidden;}
-        header {visibility: hidden;}
-        
-        /* Hiệu ứng nền động chuyển màu liên tục siêu mượt */
-        @keyframes gradientAnimation {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-
-        .stApp {
-            background: linear-gradient(-45deg, #030712, #0f172a, #1d4ed8, #090d16);
-            background-size: 400% 400%;
-            animation: gradientAnimation 15s ease infinite;
-        }
-
-        .login-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            margin-top: 6vh;
-        }
-
-        .login-card {
-            background: rgba(15, 23, 42, 0.85);
-            padding: 40px;
-            border-radius: 16px;
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.6);
-            backdrop-filter: blur(14px);
-            -webkit-backdrop-filter: blur(14px);
-            border: 1px solid rgba(59, 130, 246, 0.4);
-            max-width: 450px;
-            width: 100%;
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        .login-title {
-            color: #ffffff;
-            font-size: 24px;
-            font-weight: 700;
-            margin-bottom: 10px;
-            letter-spacing: 0.5px;
-        }
-        .login-subtitle {
-            color: #94a3b8;
-            font-size: 13px;
-            margin-bottom: 20px;
-        }
-        div.stButton > button:first-child {
-            width: 100%;
-            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-            color: white;
-            border: none;
-            padding: 12px;
-            border-radius: 8px;
-            font-weight: bold;
-            transition: all 0.3s ease;
-        }
-        div.stButton > button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.5);
-        }
-        </style>
-
-        <div class="login-container">
-            <div class="login-card">
-                <div class="login-title">📈 Hệ thống forecast chứng khoán</div>
-                <div class="login-subtitle">Vui lòng xác thực quyền truy cập bảo mật cao</div>
-            </div>
-        </div>
-    """, unsafe_allow_html=True)
-
-    # Khung form nhập thông tin đăng nhập
-    col_l1, col_l2, col_l3 = st.columns([1, 1.2, 1])
-    with col_l2:
-        with st.form("login_form"):
-            username_input = st.text_input("Tên đăng nhập", placeholder="Nhập tên đăng nhập...")
-            password_input = st.text_input("Mật khẩu", type="password", placeholder="Nhập mật khẩu...")
-            submit_login = st.form_submit_button("🔐 Xác Minh & Truy Cập")
-            
-            if submit_login:
-                if username_input == "spass122" and password_input == "Anhnam12@":
-                    st.session_state.authenticated = True
-                    st.toast("Đăng nhập thành công! Đang chuyển hướng...", icon="🚀")
-                    st.rerun()
-                else:
-                    st.error("❌ Tên đăng nhập hoặc mật khẩu không chính xác!")
-    
-    st.stop()
-
-
-# ==========================================
-# TRANG CHÍNH SAU KHI ĐĂNG NHẬP THÀNH CÔNG
-# ==========================================
-
-st.markdown("""
-    <style>
-    div.stButton > button:first-child {
-        transition: all 0.2s ease-in-out;
-        border-radius: 6px;
-        font-weight: bold;
-    }
-    div.stButton > button:hover {
-        transform: scale(1.02);
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    }
-    .metric-card {
-        background-color: #f8f9fa;
-        padding: 15px;
-        border-radius: 10px;
-        border: 1px solid #e9ecef;
-    }
-    </style>
-""", unsafe_allow_html=True)
 
 DATA_FILE = "bets_data.json"
 
@@ -254,33 +133,228 @@ def parse_and_add_bets(customer_name, message_text):
         
     return added_count
 
-# --- TIÊU ĐỀ & BANNER TRANG CHÍNH ---
-st.title("📊 Hệ Thống Quản Trị Rủi Ro Tài Chính")
-st.image(
-    "https://images.unsplash.com/photo-1639762681485-074b7f938ba0?auto=format&fit=crop&w=1400&q=80",
-    use_container_width=True,
-    caption="Smart Financial Analytics & Risk Management System"
-)
+# ==========================================
+# 1. GIAO DIỆN ĐĂNG NHẬP (HERO BANNER STYLE)
+# ==========================================
+if not st.session_state.authenticated:
+    st.markdown("""
+        <style>
+        #MainMenu {visibility: hidden;}
+        footer {visibility: hidden;}
+        header {visibility: hidden;}
+        
+        .stApp {
+            background-color: #111827;
+            color: #ffffff;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        /* Hero Banner Container */
+        .hero-banner {
+            position: relative;
+            background: linear-gradient(rgba(17, 24, 39, 0.75), rgba(17, 24, 39, 0.85)), 
+                        url('https://images.unsplash.com/photo-1639762681485-074b7f938ba0?auto=format&fit=crop&w=1600&q=80');
+            background-size: cover;
+            background-position: center;
+            padding: 80px 20px 60px 20px;
+            text-align: center;
+            border-bottom: 4px solid #f59e0b;
+            margin-bottom: 30px;
+        }
+
+        .hero-title {
+            font-size: 3.2rem;
+            font-weight: 800;
+            color: #ffffff;
+            letter-spacing: 2px;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+
+        .hero-subtitle {
+            font-size: 1.1rem;
+            color: #d1d5db;
+            letter-spacing: 1px;
+            margin-bottom: 25px;
+            font-weight: 400;
+        }
+
+        .hero-btn {
+            display: inline-block;
+            background-color: #f59e0b;
+            color: #111827;
+            padding: 10px 24px;
+            font-weight: 700;
+            border-radius: 4px;
+            text-transform: uppercase;
+            font-size: 0.9rem;
+            letter-spacing: 1px;
+            box-shadow: 0 4px 14px rgba(245, 158, 11, 0.4);
+        }
+
+        /* Card Container cho Form đăng nhập */
+        .login-card-wrapper {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        div.stButton > button:first-child {
+            width: 100%;
+            background-color: #f59e0b;
+            color: #111827;
+            border: none;
+            padding: 12px;
+            border-radius: 6px;
+            font-weight: 700;
+            text-transform: uppercase;
+            transition: all 0.3s ease;
+        }
+        div.stButton > button:hover {
+            background-color: #d97706;
+            color: #ffffff;
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+        }
+        </style>
+
+        <div class="hero-banner">
+            <div class="hero-title">HỆ THỐNG FORECAST CHỨNG KHOÁN</div>
+            <div class="hero-subtitle">Bảo Mật Cao & Quản Trị Rủi Ro Chuyên Nghiệp</div>
+            <div class="hero-btn">Xác Thực Truy Cập</div>
+        </div>
+    """, unsafe_allow_html=True)
+
+    col_l1, col_l2, col_l3 = st.columns([1, 1.2, 1])
+    with col_l2:
+        with st.form("login_form"):
+            st.markdown("### 🔐 Đăng Nhập Hệ Thống")
+            username_input = st.text_input("Tên đăng nhập", placeholder="Nhập tên đăng nhập...")
+            password_input = st.text_input("Mật khẩu", type="password", placeholder="Nhập mật khẩu...")
+            submit_login = st.form_submit_button("Xác Minh Ngay")
+            
+            if submit_login:
+                if username_input == "spass122" and password_input == "Anhnam12@":
+                    st.session_state.authenticated = True
+                    st.toast("Đăng nhập thành công!", icon="🚀")
+                    st.rerun()
+                else:
+                    st.error("❌ Tên đăng nhập hoặc mật khẩu không chính xác!")
+    st.stop()
+
+
+# ==========================================
+# 2. GIAO DIỆN TRANG CHÍNH (CONSTRUCTION THEME UI)
+# ==========================================
+st.markdown("""
+    <style>
+    .stApp {
+        background-color: #f9fafb;
+        color: #1f2937;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    
+    /* Top Brand Navbar */
+    .top-nav {
+        background-color: #111827;
+        padding: 15px 30px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        color: white;
+        border-bottom: 3px solid #f59e0b;
+        margin-bottom: 30px;
+    }
+    .brand-logo {
+        font-size: 1.2rem;
+        font-weight: 800;
+        letter-spacing: 1px;
+        color: #ffffff;
+    }
+    .brand-logo span {
+        color: #f59e0b;
+    }
+    
+    /* Card Phong cách Construction Mẫu */
+    .custom-card {
+        background: #ffffff;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        border: 1px solid #e5e7eb;
+        margin-bottom: 20px;
+        transition: transform 0.2s;
+    }
+    .custom-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    }
+    .card-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #111827;
+        margin-bottom: 8px;
+    }
+    .card-desc {
+        font-size: 0.9rem;
+        color: #4b5563;
+        line-height: 1.5;
+        margin-bottom: 15px;
+    }
+    .card-link {
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: #d97706;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    </style>
+
+    <div class="top-nav">
+        <div class="brand-logo">📊 FORECAST <span>SYSTEM</span></div>
+        <div style="font-size: 0.9rem; color: #9ca3af;">Xin chào, <b>spass122</b></div>
+    </div>
+""", unsafe_allow_html=True)
+
+# Hero Section Banner chính trong trang quản trị
+st.markdown("""
+    <div style="
+        background: linear-gradient(rgba(17, 24, 39, 0.8), rgba(17, 24, 39, 0.85)), 
+                    url('https://images.unsplash.com/photo-1639762681485-074b7f938ba0?auto=format&fit=crop&w=1600&q=80');
+        background-size: cover;
+        background-position: center;
+        padding: 50px 20px;
+        text-align: center;
+        border-radius: 8px;
+        color: white;
+        margin-bottom: 30px;
+    ">
+        <h1 style="font-size: 2.2rem; font-weight: 800; margin-bottom: 10px; color: #ffffff;">HỆ THỐNG QUẢN TRỊ TÀI CHÍNH & RỦI RO</h1>
+        <p style="font-size: 1rem; color: #d1d5db; margin-bottom: 20px;">Xây dựng giải pháp phân tích dữ liệu và tối ưu hóa vận hành thông minh</p>
+        <div style="display: inline-block; background-color: #f59e0b; color: #111827; padding: 8px 20px; font-weight: 700; border-radius: 4px; font-size: 0.85rem; text-transform: uppercase;">Trung Tâm Điều Hành</div>
+    </div>
+""", unsafe_allow_html=True)
 
 with st.sidebar:
-    st.write(f"👤 Đang đăng nhập: `spass122`")
-    if st.button("🚪 Đăng xuất hệ thống"):
+    st.markdown("### ⚙️ Bảng Điều Khiển")
+    st.write(f"Tài khoản: `spass122`")
+    if st.button("🚪 Đăng Xuất Hệ Thống"):
         st.session_state.authenticated = False
         st.rerun()
 
-tab1, tab2, tab3 = st.tabs(["📥 Nhập liệu & Biểu đồ tổng quan", "📜 Quản lý công nợ khách hàng", "🏁 Đối chiếu kết quả & Lợi nhuận"])
+# --- HỆ THỐNG TAB NỘI DUNG CHÍNH ---
+tab1, tab2, tab3 = st.tabs(["📥 Nhập liệu & Phân tích", "📜 Quản lý công nợ", "🏁 Đối chiếu & Lợi nhuận"])
 
 with tab1:
-    col_input, col_chart = st.columns([1, 1], gap="medium")
+    col_input, col_chart = st.columns([1, 1], gap="large")
     
     with col_input:
-        st.subheader("✍️ Nhập danh mục cược")
+        st.subheader("✍️ Nhập Danh Mục Cược")
         name = st.text_input("Tên Khách Hàng", value="đạt")
-        msg = st.text_area("Nội dung cược", height=140, placeholder="VD:\nXiên 29 99 100k\n05 10đ\n62-65 10đ\n050 636 20k đề")
+        msg = st.text_area("Nội dung cược", height=140, placeholder="VD:\nXiên 29 99 100k\n05 10đ\n62-65 10đ")
         
         c_btn1, c_btn2 = st.columns(2)
         with c_btn1:
-            if st.button("🚀 Cập Nhật Vào Bảng", type="primary", use_container_width=True):
+            if st.button("🚀 Ghi Nhận Dữ Liệu", type="primary", use_container_width=True):
                 if msg.strip():
                     count = parse_and_add_bets(name, msg)
                     if count > 0: 
@@ -291,15 +365,15 @@ with tab1:
                 else:
                     st.warning("Vui lòng nhập nội dung cược!")
         with c_btn2:
-            if st.button("🗑️ Xóa toàn bộ dữ liệu", use_container_width=True): 
+            if st.button("🗑️ Xóa Toàn Bộ", use_container_width=True): 
                 st.session_state.bets = []
                 if os.path.exists(DATA_FILE):
                     os.remove(DATA_FILE)
-                st.toast("Đã làm sạch toàn bộ dữ liệu!", icon="🗑️")
+                st.toast("Đã làm sạch dữ liệu!", icon="🗑️")
                 st.rerun()
 
     with col_chart:
-        st.subheader("📈 Phân tích nhanh khối lượng")
+        st.subheader("📈 Phân Tích Khối Lượng")
         if st.session_state.bets:
             type_summary = {}
             for b in st.session_state.bets:
@@ -308,12 +382,42 @@ with tab1:
             
             df_chart = pd.DataFrame(list(type_summary.items()), columns=["Loại cược", "Tổng tiền"])
             df_chart = df_chart.set_index("Loại cược")
-            st.bar_chart(df_chart, color="#2ecc71")
+            st.bar_chart(df_chart, color="#f59e0b")
         else:
-            st.info("Chưa có dữ liệu để hiển thị biểu đồ. Vui lòng nhập cược ở bên cạnh.")
+            st.info("Chưa có dữ liệu biểu đồ. Hãy nhập dữ liệu ở khung bên trái.")
+
+    st.markdown("---")
+    st.markdown("### 💡 Các Tiện Ích Phân Tích Mở Rộng")
+    
+    # Bố cục 3 thẻ card chuẩn phong cách mẫu ảnh
+    cc1, cc2, cc3 = st.columns(3)
+    with cc1:
+        st.markdown("""
+            <div class="custom-card">
+                <div class="card-title">Quản Lý Rủi Ro Lô Đề</div>
+                <div class="card-desc">Hệ thống phân tích tự động bóc tách từng danh mục cược của khách hàng, tính toán chính xác tỷ lệ hoàn trả và biên độ lợi nhuận ròng.</div>
+                <div class="card-link">CHI TIẾT VẬN HÀNH →</div>
+            </div>
+        """, unsafe_allow_html=True)
+    with cc2:
+        st.markdown("""
+            <div class="custom-card">
+                <div class="card-title">Đối Chiếu API Trực Tuyến</div>
+                <div class="card-desc">Kết nối trực tiếp với các nguồn dữ liệu kết quả xổ số nhanh chóng, tự động quy chiếu và đối soát tiền thắng thua minh bạch.</div>
+                <div class="card-link">XEM TÍCH HỢP →</div>
+            </div>
+        """, unsafe_allow_html=True)
+    with cc3:
+        st.markdown("""
+            <div class="custom-card">
+                <div class="card-title">Báo Cáo Công Nợ Cuối Ngày</div>
+                <div class="card-desc">Tổng hợp tự động bảng thanh toán dòng tiền chi tiết cho từng cá nhân, hiển thị trực quan trạng thái phải thu và phải trả.</div>
+                <div class="card-link">BÁO CÁO NGAY →</div>
+            </div>
+        """, unsafe_allow_html=True)
 
 with tab2:
-    st.subheader("📜 Danh sách chi tiết & Quản lý công nợ từng khách")
+    st.subheader("📜 Danh Sách Chi Tiết & Công Nợ Khách Hàng")
     if not st.session_state.bets:
         st.info("Chưa có lịch sử cược nào được ghi nhận.")
     else:
@@ -322,9 +426,9 @@ with tab2:
         
         m_col1, m_col2 = st.columns(2)
         with m_col1:
-            st.metric("Tổng điểm Lô khách đánh", f"{total_lo_pts} điểm")
+            st.metric("Tổng Điểm Lô", f"{total_lo_pts} điểm")
         with m_col2:
-            st.metric("Tổng thành tiền Lô", format_vnd(total_lo_money))
+            st.metric("Tổng Thành Tiền Lô", format_vnd(total_lo_money))
         
         st.divider()
         
@@ -368,21 +472,21 @@ with tab2:
                     if row_cols[4].button("🗑️", key=f"del_row_{i}"):
                         st.session_state.bets.pop(i)
                         save_data_to_file()
-                        st.toast(f"Đã xóa một mục cược của {cust}!", icon="⚠️")
+                        st.toast(f"Đã xóa một mục của {cust}!", icon="⚠️")
                         st.rerun()
                         
-                summary_html = f'<div style="background-color: #e6f4ea; padding: 10px; border-radius: 5px; margin-top: 15px; font-weight: bold; color: #137333; border: 1px solid #ceead6;">📊 Tổng kết {cust}: {cust_lo_pts} điểm Lô ({format_vnd(cust_lo_money)}) | Ngoài Lô: {format_vnd(cust_other_money)} | Tổng cộng: {format_vnd(cust_lo_money + cust_other_money)}</div>'
+                summary_html = f'<div style="background-color: #fef3c7; padding: 10px; border-radius: 5px; margin-top: 15px; font-weight: bold; color: #92400e; border: 1px solid #fde68a;">📊 Tổng kết {cust}: {cust_lo_pts} điểm Lô ({format_vnd(cust_lo_money)}) | Ngoài Lô: {format_vnd(cust_other_money)} | Tổng cộng: {format_vnd(cust_lo_money + cust_other_money)}</div>'
                 st.markdown(summary_html, unsafe_allow_html=True)
 
 with tab3:
-    st.subheader("🏁 Đối chiếu kết quả xổ số & Chốt số liệu")
+    st.subheader("🏁 Đối Chiếu Kết Quả & Chốt Lợi Nhuận")
     
     api_url = "https://api-xsmb-today.onrender.com/api/v1"
     use_api = st.checkbox("Sử dụng dữ liệu tự động từ API trực tuyến", value=True)
-    manual_res = st.text_input("Hoặc dán kết quả thủ công (phòng hờ API lỗi)", value="")
+    manual_res = st.text_input("Hoặc dán kết quả thủ công", value="")
 
-    if st.button("⚡ Chạy Đối Chiếu & Tính Toán Công Nợ", type="primary"):
-        with st.spinner("Đang xử lý đối chiếu kết quả..."):
+    if st.button("⚡ Chạy Đối Chiếu & Tính Toán", type="primary"):
+        with st.spinner("Đang đối chiếu dữ liệu..."):
             res_2d = []
             so_de = ""
             so_3c = ""
@@ -474,13 +578,13 @@ with tab3:
                 with c_n3: st.metric("Lợi nhuận mảng NCC", format_vnd(ncc_profit))
 
                 st.markdown("---")
-                st.subheader("📋 Bảng Công Nợ Chi Tiết Khách Cuối Ngày")
+                st.subheader("📋 Bảng Công Nợ Chi Tiết")
                 
                 html_parts = [
                     '<style>',
                     '.debt-table { width: 100%; border-collapse: collapse; font-family: sans-serif; margin-top: 10px; margin-bottom: 20px; }',
-                    '.debt-table th { background-color: #f0f2f6; color: #31333F; padding: 10px; border: 1px solid #d6d6d6; text-align: left; }',
-                    '.debt-table td { padding: 8px 10px; border: 1px solid #d6d6d6; color: #31333F; }',
+                    '.debt-table th { background-color: #f3f4f6; color: #111827; padding: 10px; border: 1px solid #e5e7eb; text-align: left; }',
+                    '.debt-table td { padding: 8px 10px; border: 1px solid #e5e7eb; color: #374151; }',
                     '</style>',
                     '<table class="debt-table">',
                     '<thead><tr><th>Khách hàng</th><th>Loại cược</th><th>Số đánh</th><th>Mức cược</th><th>Thành tiền</th><th>Trúng thưởng</th></tr></thead>',
@@ -495,13 +599,13 @@ with tab3:
                     net = data["total_bet"] - data["total_win"]
                     if net > 0:
                         status_str = f"🟢 Khách phải TRẢ: {format_vnd(net)}"
-                        row_bg = "#e6f4ea"
+                        row_bg = "#ecfdf5"
                     elif net < 0:
                         status_str = f"🔴 Chủ phải TRẢ KHÁCH: {format_vnd(abs(net))}"
-                        row_bg = "#fce8e6"
+                        row_bg = "#fef2f2"
                     else:
                         status_str = "⚪ Hòa vốn (0 đ)"
-                        row_bg = "#f1f3f4"
+                        row_bg = "#f9fafb"
                     
                     summary_text = f"Tổng cược: {format_vnd(data['total_bet'])} | Tổng trúng: {format_vnd(data['total_win'])} | {status_str}"
                     html_parts.append(f'<tr style="background-color: {row_bg}; font-weight: bold;"><td colspan="6" style="text-align: right; padding: 12px; color: #111;">👤 {cust} — {summary_text}</td></tr>')
@@ -515,4 +619,4 @@ with tab3:
                 c1, c2, c3 = st.columns(3)
                 with c1: st.metric("Lãi/Lỗ mảng Lô", format_vnd(total_lo_profit))
                 with c2: st.metric("Lãi/Lỗ mảng NCC", format_vnd(ncc_profit))
-                with c3: st.metric("Tổng lãi/lỗ thực tế", format_vnd(total_master_profit), delta=format_vnd(total_master_profit))
+                with c3: st.metric("Tổng lợi nhuận thực tế", format_vnd(total_master_profit), delta=format_vnd(total_master_profit))
