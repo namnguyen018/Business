@@ -370,7 +370,7 @@ with st.sidebar:
 tab1, tab2, tab3, tab4 = st.tabs(["📥 Nhập liệu & Phân tích", "📜 Quản lý công nợ", "🏁 Đối chiếu & Lợi nhuận", "💰 Doanh thu"])
 
 with tab1:
-    col_input, col_chart = st.columns([1, 1], gap="large")
+    col_input, col_stats = st.columns([1, 1.2], gap="large")
     
     with col_input:
         st.subheader("✍️ Nhập Danh Mục Cược")
@@ -383,33 +383,51 @@ with tab1:
                 if msg.strip():
                     count = parse_and_add_bets(name, msg)
                     if count > 0: 
-                        st.toast(f"Đã ghi nhận thành công {count} mục cược!", icon="✅")
-                        st.rerun()
+                        current_date_str = datetime.now().strftime("%d/%m/%Y")
+                        st.success(f"🎉 Đã ghi nhận khách **{name}** ngày **{current_date_str}** ({count} mục cược mới)!")
+                        st.balloons()
                     else: 
                         st.warning("Cú pháp không hợp lệ!")
                 else:
                     st.warning("Vui lòng nhập nội dung cược!")
         with c_btn2:
-            if st.button("🗑️ Xóa Toàn Bộ", use_container_width=True): 
+            if st.button("🗑️ Xóa Danh Sách Cược", use_container_width=True): 
                 st.session_state.bets = []
                 if os.path.exists(DATA_FILE):
                     os.remove(DATA_FILE)
-                st.toast("Đã làm sạch dữ liệu!", icon="🗑️")
+                st.toast("Đã làm sạch danh sách cược hiện tại!", icon="🗑️")
                 st.rerun()
 
-    with col_chart:
-        st.subheader("📈 Phân Tích Khối Lượng")
-        if st.session_state.bets:
-            type_summary = {}
-            for b in st.session_state.bets:
-                t = b['type']
-                type_summary[t] = type_summary.get(t, 0) + b['total']
-            
-            df_chart = pd.DataFrame(list(type_summary.items()), columns=["Loại cược", "Tổng tiền"])
-            df_chart = df_chart.set_index("Loại cược")
-            st.bar_chart(df_chart, color="#f59e0b")
+    with col_stats:
+        st.subheader("📊 Phân Tích Số Đã Đánh & Khối Lượng")
+        if not st.session_state.bets:
+            st.info("Chưa có dữ liệu cược. Hãy nhập dữ liệu ở khung bên trái.")
         else:
-            st.info("Chưa có dữ liệu biểu đồ. Hãy nhập dữ liệu ở khung bên trái.")
+            # Tổng hợp các số theo loại và điểm/tiền
+            stats_summary = {}
+            for b in st.session_state.bets:
+                key = (b['type'], b['number'])
+                if key not in stats_summary:
+                    stats_summary[key] = {"count_unit": 0, "total_money": 0}
+                if b['type'] == 'Lô':
+                    stats_summary[key]["count_unit"] += b['amount'] # điểm
+                else:
+                    stats_summary[key]["count_unit"] += 1 # số lần đánh
+                stats_summary[key]["total_money"] += b['total']
+            
+            # Đưa vào dataframe hiển thị
+            stat_rows = []
+            for (t, num), vals in stats_summary.items():
+                unit_label = f"{vals['count_unit']} điểm" if t == 'Lô' else f"{vals['count_unit']} lần"
+                stat_rows.append({
+                    "Loại": t,
+                    "Số đánh": num,
+                    "Khối lượng": unit_label,
+                    "Thành tiền": format_vnd(vals['total_money'])
+                })
+            
+            df_stats = pd.DataFrame(stat_rows)
+            st.dataframe(df_stats, use_container_width=True, hide_index=True)
 
     st.markdown("---")
     st.markdown("### 💡 Các Tiện Ích Phân Tích Mở Rộng")
@@ -597,7 +615,6 @@ with tab3:
                 # TỰ ĐỘNG LƯU LẠI LÃI/LỖ MẢNG LÔ VÀO LỊCH SỬ DOANH THU THEO NGÀY
                 today_str = datetime.now().strftime("%Y-%m-%d")
                 history = st.session_state.revenue_history
-                # Kiểm tra nếu ngày hôm nay đã có thì cập nhật, chưa có thì thêm mới
                 found_idx = -1
                 for idx, entry in enumerate(history):
                     if entry['date'] == today_str:
@@ -671,14 +688,12 @@ with tab4:
     if not st.session_state.revenue_history:
         st.info("Chưa có lịch sử doanh thu lô nào được ghi nhận. Dữ liệu sẽ tự động lưu khi bạn thực hiện 'Đối Chiếu & Tính Toán' ở Tab 3.")
     else:
-        # Sắp xếp lịch sử theo ngày giảm dần
         sorted_history = sorted(st.session_state.revenue_history, key=lambda x: x['date'], reverse=True)
         
         col_filter, col_spacer = st.columns([1, 2])
         with col_filter:
             cycle_option = st.selectbox("Chọn chu kỳ thống kê tổng lãi/lỗ:", ["7 ngày gần nhất", "10 ngày gần nhất", "30 ngày gần nhất", "Tất cả thời gian"])
         
-        # Lọc dữ liệu theo chu kỳ
         df_rev = pd.DataFrame(sorted_history)
         df_rev['date_dt'] = pd.to_datetime(df_rev['date'])
         df_rev = df_rev.sort_values('date_dt', ascending=False)
@@ -692,7 +707,6 @@ with tab4:
             limit_days = 30
             
         if limit_days:
-            # Lấy các bản ghi trong số ngày gần nhất
             max_date = df_rev['date_dt'].max()
             min_date = max_date - pd.Timedelta(days=limit_days - 1)
             df_filtered = df_rev[(df_rev['date_dt'] >= min_date)]
@@ -711,16 +725,16 @@ with tab4:
         st.markdown("---")
         st.subheader("📊 Bảng Chi Tiết Lãi/Lỗ Mảng Lô Theo Từng Ngày")
         
-        # Hiển thị bảng đẹp mắt
         display_df = df_filtered[['date', 'lo_profit']].copy()
         display_df.columns = ["Ngày", "Lãi/Lỗ Mảng Lô"]
         display_df["Lãi/Lỗ Mảng Lô"] = display_df["Lãi/Lỗ Mảng Lô"].apply(format_vnd)
         
         st.dataframe(display_df, use_container_width=True, hide_index=True)
         
-        if st.button("🗑️ Xóa Lịch Sử Doanh Thu"):
+        st.markdown("---")
+        if st.button("🗑️ Xóa Toàn Bộ Lịch Sử Doanh Thu Tích Lũy"):
             st.session_state.revenue_history = []
             if os.path.exists(REV_FILE):
                 os.remove(REV_FILE)
-            st.toast("Đã xóa toàn bộ lịch sử doanh thu!", icon="🗑️")
+            st.toast("Đã xóa toàn bộ lịch sử doanh thu tích lũy!", icon="🗑️")
             st.rerun()
