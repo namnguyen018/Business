@@ -211,29 +211,52 @@ if st.session_state.bets:
     st.markdown("---")
     st.markdown("Bấm vào nút **🗑️** ở dòng tương ứng để xóa mục cược đó.")
     
-    header_cols = st.columns([1.5, 1, 1.5, 2, 2, 0.8])
-    header_cols[0].markdown("**Khách hàng**")
-    header_cols[1].markdown("**Loại**")
-    header_cols[2].markdown("**Số đánh**")
-    header_cols[3].markdown("**Mức cược**")
-    header_cols[4].markdown("**Thành tiền**")
-    header_cols[5].markdown("**Xóa**")
-    
-    for i, b in enumerate(list(st.session_state.bets)):
-        row_cols = st.columns([1.5, 1, 1.5, 2, 2, 0.8])
-        row_cols[0].write(b['customer'])
-        row_cols[1].write(b['type'])
-        row_cols[2].write(b['number'])
+    # Nhóm dữ liệu theo từng khách hàng
+    customers_dict = {}
+    for i, b in enumerate(st.session_state.bets):
+        cust = b['customer']
+        if cust not in customers_dict:
+            customers_dict[cust] = []
+        customers_dict[cust].append((i, b))
         
-        m_cuoc = f"{b['amount']} điểm" if b['type']=="Lô" else format_vnd(b['amount'])
-        row_cols[3].write(m_cuoc)
-        row_cols[4].write(format_vnd(b['total']))
+    for cust, items in customers_dict.items():
+        st.markdown(f"### 👤 Khách hàng: {cust}")
         
-        if row_cols[5].button("🗑️", key=f"del_row_{i}"):
-            st.session_state.bets.pop(i)
-            save_data_to_file()
-            st.success("Đã xóa mục cược!")
-            st.rerun()
+        header_cols = st.columns([1, 1.5, 2, 2, 0.8])
+        header_cols[0].markdown("**Loại**")
+        header_cols[1].markdown("**Số đánh**")
+        header_cols[2].markdown("**Mức cược**")
+        header_cols[3].markdown("**Thành tiền**")
+        header_cols[4].markdown("**Xóa**")
+        
+        cust_total_money = 0
+        cust_total_lo_pts = 0
+        
+        for i, b in items:
+            row_cols = st.columns([1, 1.5, 2, 2, 0.8])
+            row_cols[0].write(b['type'])
+            row_cols[1].write(b['number'])
+            
+            m_cuoc = f"{b['amount']} điểm" if b['type']=="Lô" else format_vnd(b['amount'])
+            row_cols[2].write(m_cuoc)
+            row_cols[3].write(format_vnd(b['total']))
+            
+            cust_total_money += b['total']
+            if b['type'] == 'Lô':
+                cust_total_lo_pts += b['amount']
+                
+            if row_cols[4].button("🗑️", key=f"del_row_{i}"):
+                st.session_state.bets.pop(i)
+                save_data_to_file()
+                st.success("Đã xóa mục cược!")
+                st.rerun()
+                
+        # Dòng tổng tô đậm có màu ngăn cách ngay dưới mỗi khách
+        st.markdown(f"""
+        <div style="background-color: #e6f4ea; padding: 10px; border-radius: 5px; margin-bottom: 25px; font-weight: bold; color: #137333; border: 1px solid #ceead6;">
+            📊 Tổng kết của {cust}: {cust_total_lo_pts} điểm Lô | Tổng thành tiền: {format_vnd(cust_total_money)}
+        </div>
+        """, unsafe_allow_html=True)
 
 # --- ĐỐI CHIẾU KẾT QUẢ ---
 st.markdown("---")
@@ -335,7 +358,6 @@ if st.button("Chạy Đối Chiếu & Tính Toán"):
 
             st.subheader("📋 Bảng Công Nợ Chi Tiết Khách Cuối Ngày")
             
-            # Xây dựng bảng hiển thị HTML tùy chỉnh để ngắt quãng từng khách kèm dòng tổng tô đậm có màu
             html_table = """
             <style>
             .debt-table { width: 100%; border-collapse: collapse; font-family: sans-serif; margin-top: 10px; margin-bottom: 20px; }
@@ -370,17 +392,16 @@ if st.button("Chạy Đối Chiếu & Tính Toán"):
                     </tr>
                     """
                 
-                # Tính toán công nợ và màu sắc dòng tổng cộng của khách này
                 net = data["total_bet"] - data["total_win"]
                 if net > 0:
                     status_str = f"🟢 Khách phải TRẢ: {format_vnd(net)}"
-                    row_bg = "#e6f4ea" # Xanh lá nhạt
+                    row_bg = "#e6f4ea"
                 elif net < 0:
                     status_str = f"🔴 Chủ phải TRẢ KHÁCH: {format_vnd(abs(net))}"
-                    row_bg = "#fce8e6" # Đỏ nhạt
+                    row_bg = "#fce8e6"
                 else:
                     status_str = "⚪ Hòa vốn (0 đ)"
-                    row_bg = "#f1f3f4" # Xám nhạt
+                    row_bg = "#f1f3f4"
                 
                 summary_text = f"Tổng cược: {format_vnd(data['total_bet'])} | Tổng trúng: {format_vnd(data['total_win'])} | {status_str}"
                 
