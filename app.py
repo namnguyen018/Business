@@ -199,7 +199,6 @@ st.markdown("---")
 st.header("📜 Lịch Sử Cược Chi Tiết & Quản Lý")
 
 if st.session_state.bets:
-    # --- THÊM PHẦN TÍNH VÀ HIỂN THỊ TỔNG CỘNG TIỀN LÔ ---
     total_lo_pts = sum(b['amount'] for b in st.session_state.bets if b['type'] == 'Lô')
     total_lo_money = sum(b['total'] for b in st.session_state.bets if b['type'] == 'Lô')
     
@@ -288,15 +287,16 @@ if st.button("Chạy Đối Chiếu & Tính Toán"):
         if not success_load or not res_2d:
             st.warning("Chưa có dữ liệu kết quả hợp lệ để đối chiếu.")
         else:
-            fin = {}
             total_lo_profit = 0
             total_ncc_revenue = 0
             total_ncc_payout = 0
             
+            customer_detailed_results = {}
+            
             for b in st.session_state.bets:
                 cust = b['customer']
-                if cust not in fin: fin[cust] = {"bet": 0, "win": 0}
-                fin[cust]["bet"] += b['total']
+                if cust not in customer_detailed_results:
+                    customer_detailed_results[cust] = {"bets": [], "total_bet": 0, "total_win": 0}
                 
                 win = 0
                 if b['type'] == "Lô":
@@ -314,7 +314,11 @@ if st.button("Chạy Đối Chiếu & Tính Toán"):
                     if len(parts) == 3 and parts[0] in res_2d and parts[1] in res_2d and parts[2] in res_2d:
                         win = b['amount'] * X3_PAY
                         
-                fin[cust]["win"] += win
+                b_eval = b.copy()
+                b_eval['win_amount'] = win
+                customer_detailed_results[cust]["bets"].append(b_eval)
+                customer_detailed_results[cust]["total_bet"] += b['total']
+                customer_detailed_results[cust]["total_win"] += win
                 
                 if b['type'] == "Lô":
                     total_lo_profit += ((b['amount'] * LO_REV) - win)
@@ -330,13 +334,66 @@ if st.button("Chạy Đối Chiếu & Tính Toán"):
             with c_n3: st.metric("Lợi nhuận mảng NCC", format_vnd(ncc_profit))
 
             st.subheader("📋 Bảng Công Nợ Chi Tiết Khách Cuối Ngày")
-            debt_list = []
-            for c, v in fin.items():
-                net = v['bet'] - v['win']
-                status = f"🟢 Khách phải TRẢ: {format_vnd(net)}" if net > 0 else f"🔴 Chủ phải TRẢ KHÁCH: {format_vnd(abs(net))}"
-                if net == 0: status = "⚪ Hòa vốn (0 đ)"
-                debt_list.append({"Khách hàng": c, "Tổng cược": format_vnd(v['bet']), "Tổng trúng": format_vnd(v['win']), "Trạng thái": status})
-            st.dataframe(pd.DataFrame(debt_list), use_container_width=True)
+            
+            # Xây dựng bảng hiển thị HTML tùy chỉnh để ngắt quãng từng khách kèm dòng tổng tô đậm có màu
+            html_table = """
+            <style>
+            .debt-table { width: 100%; border-collapse: collapse; font-family: sans-serif; margin-top: 10px; margin-bottom: 20px; }
+            .debt-table th { background-color: #f0f2f6; color: #31333F; padding: 10px; border: 1px solid #d6d6d6; text-align: left; }
+            .debt-table td { padding: 8px 10px; border: 1px solid #d6d6d6; color: #31333F; }
+            </style>
+            <table class="debt-table">
+                <thead>
+                    <tr>
+                        <th>Khách hàng</th>
+                        <th>Loại cược</th>
+                        <th>Số đánh</th>
+                        <th>Mức cược</th>
+                        <th>Thành tiền</th>
+                        <th>Trúng thưởng</th>
+                    </tr>
+                </thead>
+                <tbody>
+            """
+            
+            for cust, data in customer_detailed_results.items():
+                for b in data["bets"]:
+                    m_cuoc = f"{b['amount']} điểm" if b['type']=="Lô" else format_vnd(b['amount'])
+                    html_table += f"""
+                    <tr>
+                        <td><b>{cust}</b></td>
+                        <td>{b['type']}</td>
+                        <td>{b['number']}</td>
+                        <td>{m_cuoc}</td>
+                        <td>{format_vnd(b['total'])}</td>
+                        <td>{format_vnd(b['win_amount'])}</td>
+                    </tr>
+                    """
+                
+                # Tính toán công nợ và màu sắc dòng tổng cộng của khách này
+                net = data["total_bet"] - data["total_win"]
+                if net > 0:
+                    status_str = f"🟢 Khách phải TRẢ: {format_vnd(net)}"
+                    row_bg = "#e6f4ea" # Xanh lá nhạt
+                elif net < 0:
+                    status_str = f"🔴 Chủ phải TRẢ KHÁCH: {format_vnd(abs(net))}"
+                    row_bg = "#fce8e6" # Đỏ nhạt
+                else:
+                    status_str = "⚪ Hòa vốn (0 đ)"
+                    row_bg = "#f1f3f4" # Xám nhạt
+                
+                summary_text = f"Tổng cược: {format_vnd(data['total_bet'])} | Tổng trúng: {format_vnd(data['total_win'])} | {status_str}"
+                
+                html_table += f"""
+                <tr style="background-color: {row_bg}; font-weight: bold;">
+                    <td colspan="6" style="text-align: right; padding: 12px; color: #111;">
+                        👤 {cust} — {summary_text}
+                    </td>
+                </tr>
+                """
+            
+            html_table += "</tbody></table>"
+            st.markdown(html_table, unsafe_allow_html=True)
             
             st.divider()
             st.subheader("📈 Tổng Kết Lợi Nhuận Thực Tế")
