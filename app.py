@@ -4,18 +4,18 @@ import pandas as pd
 import requests
 import json
 import os
+from datetime import datetime
 
 # --- CẤU HÌNH GIAO DIỆN ---
 st.set_page_config(page_title="Hệ Thống Quản Trị & Forecast Chứng Khoán", layout="wide")
 
-# --- CSS TOÀN CỤC (ĐỒNG BỘ HOÀN HẢO TỐI MÀU, KHẮC PHỤC CHỮ CHÌM & KHUNG TRẮNG THÔ) ---
+# --- CSS TOÀN CỤC ---
 st.markdown("""
     <style>
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     header {visibility: hidden;}
     
-    /* Nền tổng thể tối sâu */
     .stApp {
         background: linear-gradient(rgba(11, 15, 25, 0.96), rgba(11, 15, 25, 0.99)), 
                     url('https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=1600&q=80');
@@ -26,12 +26,10 @@ st.markdown("""
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     }
 
-    /* Ép buộc màu chữ hiển thị sáng rõ trên mọi thành phần */
     label, p, span, div, .stMarkdown {
         color: #f3f4f6 !important;
     }
 
-    /* TÙY CHỈNH THANH TAB (GIẢI QUYẾT TRIỆT ĐỂ CHỮ CHÌM Ở TAB) */
     .stTabs [data-baseweb="tab-list"] {
         gap: 10px;
         background-color: rgba(17, 24, 39, 0.8);
@@ -44,21 +42,20 @@ st.markdown("""
         background-color: rgba(30, 41, 59, 0.7) !important;
         border-radius: 6px !important;
         padding: 0 20px;
-        color: #cbd5e1 !important; /* Tab chưa chọn sáng rõ, không bị chìm */
+        color: #cbd5e1 !important;
         font-weight: 600;
         border: 1px solid rgba(255, 255, 255, 0.05);
     }
     .stTabs [aria-selected="true"] {
         background-color: #f59e0b !important;
-        color: #111827 !important; /* Tab đang chọn cực kỳ nổi bật */
+        color: #111827 !important;
         font-weight: 700 !important;
     }
     .stTabs [aria-selected="true"] p {
         color: #111827 !important;
     }
 
-    /* KHẮC PHỤC CÁC VÙNG TRẮNG THÔ (Ô NHẬP LIỆU, TEXTAREA, CONTAINER) */
-    .stTextInput input, .stTextArea textarea {
+    .stTextInput input, .stTextArea textarea, .stSelectbox select {
         background-color: rgba(15, 23, 42, 0.9) !important;
         color: #ffffff !important;
         border: 1px solid rgba(245, 158, 11, 0.4) !important;
@@ -69,7 +66,6 @@ st.markdown("""
         box-shadow: 0 0 8px rgba(245, 158, 11, 0.3) !important;
     }
 
-    /* Top Nav / Header */
     .top-nav {
         background-color: rgba(17, 24, 39, 0.95);
         padding: 15px 30px;
@@ -92,7 +88,6 @@ st.markdown("""
         color: #f59e0b;
     }
 
-    /* Hero Banner */
     .hero-banner {
         background: rgba(17, 24, 39, 0.9);
         padding: 40px 20px;
@@ -129,7 +124,6 @@ st.markdown("""
         box-shadow: 0 4px 14px rgba(245, 158, 11, 0.4);
     }
 
-    /* Thẻ Card tùy chỉnh */
     .custom-card {
         background: rgba(30, 41, 59, 0.9);
         padding: 20px;
@@ -138,11 +132,6 @@ st.markdown("""
         border: 1px solid rgba(245, 158, 11, 0.3);
         margin-bottom: 20px;
         backdrop-filter: blur(6px);
-        transition: transform 0.2s;
-    }
-    .custom-card:hover {
-        transform: translateY(-3px);
-        border-color: rgba(245, 158, 11, 0.8);
     }
     .card-title {
         font-size: 1.1rem;
@@ -163,7 +152,6 @@ st.markdown("""
         text-transform: uppercase;
     }
 
-    /* Nút bấm chính */
     div.stButton > button, div.stFormSubmitButton > button {
         width: 100% !important;
         background-color: #f59e0b !important;
@@ -188,6 +176,7 @@ if 'authenticated' not in st.session_state:
     st.session_state.authenticated = False
 
 DATA_FILE = "bets_data.json"
+REV_FILE = "revenue_history.json"
 
 def load_saved_data():
     if os.path.exists(DATA_FILE):
@@ -201,8 +190,23 @@ def save_data_to_file():
     with open(DATA_FILE, "w", encoding="utf-8") as f:
         json.dump(st.session_state.bets, f, ensure_ascii=False, indent=4)
 
+def load_revenue_history():
+    if os.path.exists(REV_FILE):
+        try:
+            with open(REV_FILE, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except: return []
+    return []
+
+def save_revenue_history(history_list):
+    with open(REV_FILE, "w", encoding="utf-8") as f:
+        json.dump(history_list, f, ensure_ascii=False, indent=4)
+
 if 'bets' not in st.session_state: 
     st.session_state.bets = load_saved_data()
+
+if 'revenue_history' not in st.session_state:
+    st.session_state.revenue_history = load_revenue_history()
 
 LO_REV, LO_PAY, DE_PAY, BC_PAY, X2_PAY, X3_PAY = 22500, 80000, 70, 400, 10, 40
 
@@ -363,7 +367,7 @@ with st.sidebar:
         st.session_state.authenticated = False
         st.rerun()
 
-tab1, tab2, tab3 = st.tabs(["📥 Nhập liệu & Phân tích", "📜 Quản lý công nợ", "🏁 Đối chiếu & Lợi nhuận"])
+tab1, tab2, tab3, tab4 = st.tabs(["📥 Nhập liệu & Phân tích", "📜 Quản lý công nợ", "🏁 Đối chiếu & Lợi nhuận", "💰 Doanh thu"])
 
 with tab1:
     col_input, col_chart = st.columns([1, 1], gap="large")
@@ -590,6 +594,26 @@ with tab3:
 
                 ncc_profit = total_ncc_revenue - total_ncc_payout
                 
+                # TỰ ĐỘNG LƯU LẠI LÃI/LỖ MẢNG LÔ VÀO LỊCH SỬ DOANH THU THEO NGÀY
+                today_str = datetime.now().strftime("%Y-%m-%d")
+                history = st.session_state.revenue_history
+                # Kiểm tra nếu ngày hôm nay đã có thì cập nhật, chưa có thì thêm mới
+                found_idx = -1
+                for idx, entry in enumerate(history):
+                    if entry['date'] == today_str:
+                        found_idx = idx
+                        break
+                
+                rev_entry = {"date": today_str, "lo_profit": total_lo_profit}
+                if found_idx >= 0:
+                    history[found_idx] = rev_entry
+                else:
+                    history.append(rev_entry)
+                
+                st.session_state.revenue_history = history
+                save_revenue_history(history)
+                st.toast("Đã tự động lưu tổng lãi/lỗ mảng Lô vào Tab Doanh Thu!", icon="💾")
+
                 st.markdown("---")
                 st.subheader("🏢 Thông Tin Nhà Cung Cấp (NCC)")
                 c_n1, c_n2, c_n3 = st.columns(3)
@@ -640,3 +664,63 @@ with tab3:
                 with c1: st.metric("Lãi/Lỗ mảng Lô", format_vnd(total_lo_profit))
                 with c2: st.metric("Lãi/Lỗ mảng NCC", format_vnd(ncc_profit))
                 with c3: st.metric("Tổng lợi nhuận thực tế", format_vnd(total_master_profit), delta=format_vnd(total_master_profit))
+
+with tab4:
+    st.subheader("💰 Quản Lý Doanh Thu & Lợi Nhuận Mảng Lô Theo Ngày")
+    
+    if not st.session_state.revenue_history:
+        st.info("Chưa có lịch sử doanh thu lô nào được ghi nhận. Dữ liệu sẽ tự động lưu khi bạn thực hiện 'Đối Chiếu & Tính Toán' ở Tab 3.")
+    else:
+        # Sắp xếp lịch sử theo ngày giảm dần
+        sorted_history = sorted(st.session_state.revenue_history, key=lambda x: x['date'], reverse=True)
+        
+        col_filter, col_spacer = st.columns([1, 2])
+        with col_filter:
+            cycle_option = st.selectbox("Chọn chu kỳ thống kê tổng lãi/lỗ:", ["7 ngày gần nhất", "10 ngày gần nhất", "30 ngày gần nhất", "Tất cả thời gian"])
+        
+        # Lọc dữ liệu theo chu kỳ
+        df_rev = pd.DataFrame(sorted_history)
+        df_rev['date_dt'] = pd.to_datetime(df_rev['date'])
+        df_rev = df_rev.sort_values('date_dt', ascending=False)
+        
+        limit_days = None
+        if "7" in cycle_option:
+            limit_days = 7
+        elif "10" in cycle_option:
+            limit_days = 10
+        elif "30" in cycle_option:
+            limit_days = 30
+            
+        if limit_days:
+            # Lấy các bản ghi trong số ngày gần nhất
+            max_date = df_rev['date_dt'].max()
+            min_date = max_date - pd.Timedelta(days=limit_days - 1)
+            df_filtered = df_rev[(df_rev['date_dt'] >= min_date)]
+        else:
+            df_filtered = df_rev
+            
+        total_cycle_profit = df_filtered['lo_profit'].sum()
+        
+        st.markdown("---")
+        col_m1, col_m2 = st.columns(2)
+        with col_m1:
+            st.metric(f"Tổng Lãi/Lỗ trong ({cycle_option})", format_vnd(total_cycle_profit), delta=format_vnd(total_cycle_profit))
+        with col_m2:
+            st.metric("Tổng Số Ngày Ghi Nhận", f"{len(df_filtered)} ngày")
+            
+        st.markdown("---")
+        st.subheader("📊 Bảng Chi Tiết Lãi/Lỗ Mảng Lô Theo Từng Ngày")
+        
+        # Hiển thị bảng đẹp mắt
+        display_df = df_filtered[['date', 'lo_profit']].copy()
+        display_df.columns = ["Ngày", "Lãi/Lỗ Mảng Lô"]
+        display_df["Lãi/Lỗ Mảng Lô"] = display_df["Lãi/Lỗ Mảng Lô"].apply(format_vnd)
+        
+        st.dataframe(display_df, use_container_width=True, hide_index=True)
+        
+        if st.button("🗑️ Xóa Lịch Sử Doanh Thu"):
+            st.session_state.revenue_history = []
+            if os.path.exists(REV_FILE):
+                os.remove(REV_FILE)
+            st.toast("Đã xóa toàn bộ lịch sử doanh thu!", icon="🗑️")
+            st.rerun()
