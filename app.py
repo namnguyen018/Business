@@ -229,8 +229,9 @@ if st.session_state.bets:
         header_cols[3].markdown("**Thành tiền**")
         header_cols[4].markdown("**Xóa**")
         
-        cust_total_money = 0
-        cust_total_lo_pts = 0
+        cust_lo_pts = 0
+        cust_lo_money = 0
+        cust_other_money = 0
         
         for i, b in items:
             row_cols = st.columns([1, 1.5, 2, 2, 0.8])
@@ -241,9 +242,11 @@ if st.session_state.bets:
             row_cols[2].write(m_cuoc)
             row_cols[3].write(format_vnd(b['total']))
             
-            cust_total_money += b['total']
             if b['type'] == 'Lô':
-                cust_total_lo_pts += b['amount']
+                cust_lo_pts += b['amount']
+                cust_lo_money += b['total']
+            else:
+                cust_other_money += b['total']
                 
             if row_cols[4].button("🗑️", key=f"del_row_{i}"):
                 st.session_state.bets.pop(i)
@@ -251,10 +254,10 @@ if st.session_state.bets:
                 st.success("Đã xóa mục cược!")
                 st.rerun()
                 
-        # Dòng tổng tô đậm có màu ngăn cách ngay dưới mỗi khách
+        # Dòng tổng tô đậm tách riêng tiền Lô và tiền khác ngoài Lô
         st.markdown(f"""
         <div style="background-color: #e6f4ea; padding: 10px; border-radius: 5px; margin-bottom: 25px; font-weight: bold; color: #137333; border: 1px solid #ceead6;">
-            📊 Tổng kết của {cust}: {cust_total_lo_pts} điểm Lô | Tổng thành tiền: {format_vnd(cust_total_money)}
+            📊 Tổng kết của {cust}: {cust_lo_pts} điểm Lô ({format_vnd(cust_lo_money)}) | Tiền ngoài Lô (Đề/Xiên/...): {format_vnd(cust_other_money)} | Tổng cộng: {format_vnd(cust_lo_money + cust_other_money)}
         </div>
         """, unsafe_allow_html=True)
 
