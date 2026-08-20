@@ -8,16 +8,16 @@ import os
 # --- CẤU HÌNH GIAO DIỆN ---
 st.set_page_config(page_title="Hệ Thống Quản Trị & Forecast Chứng Khoán", layout="wide")
 
-# --- CSS TOÀN CỤC (ĐỒNG BỘ NỀN VÀ MÀU CHỮ RÕ NÉT TRÊN MỌI MÀN HÌNH) ---
+# --- CSS TOÀN CỤC (ĐỒNG BỘ HOÀN HẢO TỐI MÀU, KHẮC PHỤC CHỮ CHÌM & KHUNG TRẮNG THÔ) ---
 st.markdown("""
     <style>
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     header {visibility: hidden;}
     
-    /* Nền tối sâu cao cấp, phủ lớp gradient hoàn hảo để chữ nổi bật tuyệt đối */
+    /* Nền tổng thể tối sâu */
     .stApp {
-        background: linear-gradient(rgba(11, 15, 25, 0.95), rgba(11, 15, 25, 0.98)), 
+        background: linear-gradient(rgba(11, 15, 25, 0.96), rgba(11, 15, 25, 0.99)), 
                     url('https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=1600&q=80');
         background-size: cover;
         background-position: center;
@@ -26,15 +26,47 @@ st.markdown("""
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     }
 
-    /* Ép buộc toàn bộ nhãn chữ (Label), tiêu đề, văn bản sáng rõ */
-    label, .stTextInput label, .stTextArea label, .stSelectbox label, p, span, div {
-        color: #f3f4f6;
+    /* Ép buộc màu chữ hiển thị sáng rõ trên mọi thành phần */
+    label, p, span, div, .stMarkdown {
+        color: #f3f4f6 !important;
     }
-    
-    /* Tiêu đề các input/widget đậm và sáng */
-    .stTextInput label p, .stTextArea label p {
-        color: #ffffff !important;
+
+    /* TÙY CHỈNH THANH TAB (GIẢI QUYẾT TRIỆT ĐỂ CHỮ CHÌM Ở TAB) */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 10px;
+        background-color: rgba(17, 24, 39, 0.8);
+        padding: 10px;
+        border-radius: 8px;
+        border: 1px solid rgba(245, 158, 11, 0.2);
+    }
+    .stTabs [data-baseweb="tab"] {
+        height: 45px;
+        background-color: rgba(30, 41, 59, 0.7) !important;
+        border-radius: 6px !important;
+        padding: 0 20px;
+        color: #cbd5e1 !important; /* Tab chưa chọn sáng rõ, không bị chìm */
+        font-weight: 600;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    .stTabs [aria-selected="true"] {
+        background-color: #f59e0b !important;
+        color: #111827 !important; /* Tab đang chọn cực kỳ nổi bật */
         font-weight: 700 !important;
+    }
+    .stTabs [aria-selected="true"] p {
+        color: #111827 !important;
+    }
+
+    /* KHẮC PHỤC CÁC VÙNG TRẮNG THÔ (Ô NHẬP LIỆU, TEXTAREA, CONTAINER) */
+    .stTextInput input, .stTextArea textarea {
+        background-color: rgba(15, 23, 42, 0.9) !important;
+        color: #ffffff !important;
+        border: 1px solid rgba(245, 158, 11, 0.4) !important;
+        border-radius: 6px !important;
+    }
+    .stTextInput input:focus, .stTextArea textarea:focus {
+        border-color: #f59e0b !important;
+        box-shadow: 0 0 8px rgba(245, 158, 11, 0.3) !important;
     }
 
     /* Top Nav / Header */
@@ -115,23 +147,23 @@ st.markdown("""
     .card-title {
         font-size: 1.1rem;
         font-weight: 700;
-        color: #ffffff;
+        color: #ffffff !important;
         margin-bottom: 8px;
     }
     .card-desc {
         font-size: 0.9rem;
-        color: #cbd5e1;
+        color: #cbd5e1 !important;
         line-height: 1.5;
         margin-bottom: 15px;
     }
     .card-link {
         font-size: 0.85rem;
         font-weight: 700;
-        color: #f59e0b;
+        color: #f59e0b !important;
         text-transform: uppercase;
     }
 
-    /* Đồng bộ nút bấm chính */
+    /* Nút bấm chính */
     div.stButton > button, div.stFormSubmitButton > button {
         width: 100% !important;
         background-color: #f59e0b !important;
