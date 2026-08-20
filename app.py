@@ -134,7 +134,7 @@ def parse_and_add_bets(customer_name, message_text):
     return added_count
 
 # ==========================================
-# 1. GIAO DIỆN ĐĂNG NHẬP (FULL BACKGROUND CHÌM)
+# 1. GIAO DIỆN ĐĂNG NHẬP (HÌNH NỀN SÁNG SỦA & RÕ CHỮ)
 # ==========================================
 if not st.session_state.authenticated:
     st.markdown("""
@@ -143,10 +143,10 @@ if not st.session_state.authenticated:
         footer {visibility: hidden;}
         header {visibility: hidden;}
         
-        /* Hình nền chìm phủ toàn bộ màn hình với lớp tối mờ */
+        /* Hình nền sáng sủa, tươi mới hơn (Màu sắc hiện đại, chuyên nghiệp) kết hợp lớp phủ nhẹ vừa đủ */
         .stApp {
-            background: linear-gradient(rgba(11, 15, 25, 0.90), rgba(11, 15, 25, 0.94)), 
-                        url('https://images.unsplash.com/photo-1639762681485-074b7f938ba0?auto=format&fit=crop&w=1600&q=80');
+            background: linear-gradient(rgba(15, 23, 42, 0.75), rgba(15, 23, 42, 0.85)), 
+                        url('https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=1600&q=80');
             background-size: cover;
             background-position: center;
             background-attachment: fixed;
@@ -154,9 +154,15 @@ if not st.session_state.authenticated:
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
         }
 
+        /* Ép buộc tất cả nhãn chữ (Label) hiển thị cực kỳ rõ nét */
+        label, .stTextInput label, p {
+            color: #ffffff !important;
+            font-weight: 600 !important;
+        }
+
         /* Hero Banner */
         .hero-banner {
-            background: rgba(17, 24, 39, 0.75);
+            background: rgba(17, 24, 39, 0.85);
             padding: 50px 20px 40px 20px;
             text-align: center;
             border-bottom: 4px solid #f59e0b;
@@ -245,8 +251,8 @@ if not st.session_state.authenticated:
 st.markdown("""
     <style>
     .stApp {
-        background: linear-gradient(rgba(15, 23, 42, 0.92), rgba(15, 23, 42, 0.95)), 
-                    url('https://images.unsplash.com/photo-1639762681485-074b7f938ba0?auto=format&fit=crop&w=1600&q=80');
+        background: linear-gradient(rgba(15, 23, 42, 0.85), rgba(15, 23, 42, 0.9)), 
+                    url('https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=1600&q=80');
         background-size: cover;
         background-position: center;
         background-attachment: fixed;
