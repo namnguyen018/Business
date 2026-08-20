@@ -8,6 +8,149 @@ import os
 # --- CẤU HÌNH GIAO DIỆN ---
 st.set_page_config(page_title="Hệ Thống Quản Trị & Forecast Chứng Khoán", layout="wide")
 
+# --- CSS TOÀN CỤC (ĐỒNG BỘ NỀN VÀ MÀU CHỮ RÕ NÉT TRÊN MỌI MÀN HÌNH) ---
+st.markdown("""
+    <style>
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    header {visibility: hidden;}
+    
+    /* Nền tối sâu cao cấp, phủ lớp gradient hoàn hảo để chữ nổi bật tuyệt đối */
+    .stApp {
+        background: linear-gradient(rgba(11, 15, 25, 0.95), rgba(11, 15, 25, 0.98)), 
+                    url('https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=1600&q=80');
+        background-size: cover;
+        background-position: center;
+        background-attachment: fixed;
+        color: #ffffff !important;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    /* Ép buộc toàn bộ nhãn chữ (Label), tiêu đề, văn bản sáng rõ */
+    label, .stTextInput label, .stTextArea label, .stSelectbox label, p, span, div {
+        color: #f3f4f6;
+    }
+    
+    /* Tiêu đề các input/widget đậm và sáng */
+    .stTextInput label p, .stTextArea label p {
+        color: #ffffff !important;
+        font-weight: 700 !important;
+    }
+
+    /* Top Nav / Header */
+    .top-nav {
+        background-color: rgba(17, 24, 39, 0.95);
+        padding: 15px 30px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        color: white;
+        border-bottom: 3px solid #f59e0b;
+        margin-bottom: 30px;
+        backdrop-filter: blur(8px);
+        border-radius: 6px;
+    }
+    .brand-logo {
+        font-size: 1.2rem;
+        font-weight: 800;
+        letter-spacing: 1px;
+        color: #ffffff;
+    }
+    .brand-logo span {
+        color: #f59e0b;
+    }
+
+    /* Hero Banner */
+    .hero-banner {
+        background: rgba(17, 24, 39, 0.9);
+        padding: 40px 20px;
+        text-align: center;
+        border-bottom: 4px solid #f59e0b;
+        border-radius: 8px;
+        margin-bottom: 30px;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+    .hero-title {
+        font-size: 2.2rem;
+        font-weight: 800;
+        color: #ffffff;
+        letter-spacing: 1.5px;
+        margin-bottom: 8px;
+        text-transform: uppercase;
+    }
+    .hero-subtitle {
+        font-size: 0.95rem;
+        color: #94a3b8;
+        letter-spacing: 0.5px;
+        margin-bottom: 20px;
+    }
+    .hero-btn {
+        display: inline-block;
+        background-color: #f59e0b;
+        color: #111827;
+        padding: 8px 20px;
+        font-weight: 700;
+        border-radius: 4px;
+        text-transform: uppercase;
+        font-size: 0.85rem;
+        box-shadow: 0 4px 14px rgba(245, 158, 11, 0.4);
+    }
+
+    /* Thẻ Card tùy chỉnh */
+    .custom-card {
+        background: rgba(30, 41, 59, 0.9);
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(245, 158, 11, 0.3);
+        margin-bottom: 20px;
+        backdrop-filter: blur(6px);
+        transition: transform 0.2s;
+    }
+    .custom-card:hover {
+        transform: translateY(-3px);
+        border-color: rgba(245, 158, 11, 0.8);
+    }
+    .card-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #ffffff;
+        margin-bottom: 8px;
+    }
+    .card-desc {
+        font-size: 0.9rem;
+        color: #cbd5e1;
+        line-height: 1.5;
+        margin-bottom: 15px;
+    }
+    .card-link {
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: #f59e0b;
+        text-transform: uppercase;
+    }
+
+    /* Đồng bộ nút bấm chính */
+    div.stButton > button, div.stFormSubmitButton > button {
+        width: 100% !important;
+        background-color: #f59e0b !important;
+        color: #111827 !important;
+        border: none !important;
+        padding: 10px 20px !important;
+        border-radius: 6px !important;
+        font-weight: 700 !important;
+        text-transform: uppercase !important;
+        transition: all 0.3s ease !important;
+    }
+    div.stButton > button:hover, div.stFormSubmitButton > button:hover {
+        background-color: #d97706 !important;
+        color: #ffffff !important;
+        box-shadow: 0 4px 12px rgba(245, 158, 11, 0.5) !important;
+    }
+    </style>
+""", unsafe_allow_html=True)
+
 # Khởi tạo trạng thái đăng nhập
 if 'authenticated' not in st.session_state:
     st.session_state.authenticated = False
@@ -134,92 +277,10 @@ def parse_and_add_bets(customer_name, message_text):
     return added_count
 
 # ==========================================
-# 1. GIAO DIỆN ĐĂNG NHẬP (HÌNH NỀN SÁNG SỦA & RÕ CHỮ)
+# 1. GIAO DIỆN ĐĂNG NHẬP
 # ==========================================
 if not st.session_state.authenticated:
     st.markdown("""
-        <style>
-        #MainMenu {visibility: hidden;}
-        footer {visibility: hidden;}
-        header {visibility: hidden;}
-        
-        /* Hình nền sáng sủa, tươi mới hơn (Màu sắc hiện đại, chuyên nghiệp) kết hợp lớp phủ nhẹ vừa đủ */
-        .stApp {
-            background: linear-gradient(rgba(15, 23, 42, 0.75), rgba(15, 23, 42, 0.85)), 
-                        url('https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=1600&q=80');
-            background-size: cover;
-            background-position: center;
-            background-attachment: fixed;
-            color: #ffffff;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-        }
-
-        /* Ép buộc tất cả nhãn chữ (Label) hiển thị cực kỳ rõ nét */
-        label, .stTextInput label, p {
-            color: #ffffff !important;
-            font-weight: 600 !important;
-        }
-
-        /* Hero Banner */
-        .hero-banner {
-            background: rgba(17, 24, 39, 0.85);
-            padding: 50px 20px 40px 20px;
-            text-align: center;
-            border-bottom: 4px solid #f59e0b;
-            margin-bottom: 30px;
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-        }
-
-        .hero-title {
-            font-size: 2.8rem;
-            font-weight: 800;
-            color: #ffffff;
-            letter-spacing: 2px;
-            margin-bottom: 8px;
-            text-transform: uppercase;
-        }
-
-        .hero-subtitle {
-            font-size: 1rem;
-            color: #d1d5db;
-            letter-spacing: 1px;
-            margin-bottom: 20px;
-            font-weight: 400;
-        }
-
-        .hero-btn {
-            display: inline-block;
-            background-color: #f59e0b;
-            color: #111827;
-            padding: 8px 20px;
-            font-weight: 700;
-            border-radius: 4px;
-            text-transform: uppercase;
-            font-size: 0.85rem;
-            letter-spacing: 1px;
-            box-shadow: 0 4px 14px rgba(245, 158, 11, 0.4);
-        }
-
-        /* Đồng bộ tuyệt đối màu nút bấm Form đăng nhập */
-        div.stFormSubmitButton > button {
-            width: 100% !important;
-            background-color: #f59e0b !important;
-            color: #111827 !important;
-            border: none !important;
-            padding: 12px !important;
-            border-radius: 6px !important;
-            font-weight: 700 !important;
-            text-transform: uppercase !important;
-            transition: all 0.3s ease !important;
-        }
-        div.stFormSubmitButton > button:hover {
-            background-color: #d97706 !important;
-            color: #ffffff !important;
-            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.5) !important;
-        }
-        </style>
-
         <div class="hero-banner">
             <div class="hero-title">HỆ THỐNG FORECAST CHỨNG KHOÁN</div>
             <div class="hero-subtitle">Bảo Mật Cao & Quản Trị Rủi Ro Chuyên Nghiệp</div>
@@ -249,95 +310,17 @@ if not st.session_state.authenticated:
 # 2. GIAO DIỆN TRANG CHÍNH (SAU KHI ĐĂNG NHẬP)
 # ==========================================
 st.markdown("""
-    <style>
-    .stApp {
-        background: linear-gradient(rgba(15, 23, 42, 0.85), rgba(15, 23, 42, 0.9)), 
-                    url('https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=1600&q=80');
-        background-size: cover;
-        background-position: center;
-        background-attachment: fixed;
-        color: #f3f4f6;
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    }
-    
-    .top-nav {
-        background-color: rgba(17, 24, 39, 0.9);
-        padding: 15px 30px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        color: white;
-        border-bottom: 3px solid #f59e0b;
-        margin-bottom: 30px;
-        backdrop-filter: blur(8px);
-    }
-    .brand-logo {
-        font-size: 1.2rem;
-        font-weight: 800;
-        letter-spacing: 1px;
-        color: #ffffff;
-    }
-    .brand-logo span {
-        color: #f59e0b;
-    }
-    
-    .custom-card {
-        background: rgba(30, 41, 59, 0.85);
-        padding: 20px;
-        border-radius: 8px;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
-        border: 1px solid rgba(245, 158, 11, 0.3);
-        margin-bottom: 20px;
-        backdrop-filter: blur(6px);
-        transition: transform 0.2s;
-    }
-    .custom-card:hover {
-        transform: translateY(-3px);
-        border-color: rgba(245, 158, 11, 0.8);
-    }
-    .card-title {
-        font-size: 1.1rem;
-        font-weight: 700;
-        color: #ffffff;
-        margin-bottom: 8px;
-    }
-    .card-desc {
-        font-size: 0.9rem;
-        color: #94a3b8;
-        line-height: 1.5;
-        margin-bottom: 15px;
-    }
-    .card-link {
-        font-size: 0.85rem;
-        font-weight: 700;
-        color: #f59e0b;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-    </style>
-
     <div class="top-nav">
         <div class="brand-logo">📊 FORECAST <span>SYSTEM</span></div>
-        <div style="font-size: 0.9rem; color: #94a3b8;">Xin chào, <b>spass122</b></div>
+        <div style="font-size: 0.9rem; color: #cbd5e1;">Xin chào, <b>spass122</b></div>
     </div>
 """, unsafe_allow_html=True)
 
 st.markdown("""
-    <div style="
-        background: linear-gradient(rgba(17, 24, 39, 0.85), rgba(17, 24, 39, 0.9));
-        background-size: cover;
-        background-position: center;
-        padding: 40px 20px;
-        text-align: center;
-        border-radius: 8px;
-        color: white;
-        margin-bottom: 30px;
-        border: 1px solid rgba(245, 158, 11, 0.3);
-        backdrop-filter: blur(8px);
-    ">
-        <h1 style="font-size: 2rem; font-weight: 800; margin-bottom: 10px; color: #ffffff;">HỆ THỐNG QUẢN TRỊ TÀI CHÍNH & RỦI RO</h1>
-        <p style="font-size: 0.95rem; color: #94a3b8; margin-bottom: 20px;">Xây dựng giải pháp phân tích dữ liệu và tối ưu hóa vận hành thông minh</p>
-        <div style="display: inline-block; background-color: #f59e0b; color: #111827; padding: 8px 20px; font-weight: 700; border-radius: 4px; font-size: 0.85rem; text-transform: uppercase;">Trung Tâm Điều Hành</div>
+    <div class="hero-banner">
+        <h1 class="hero-title" style="font-size: 1.8rem;">HỆ THỐNG QUẢN TRỊ TÀI CHÍNH & RỦI RO</h1>
+        <p class="hero-subtitle">Xây dựng giải pháp phân tích dữ liệu và tối ưu hóa vận hành thông minh</p>
+        <div class="hero-btn">Trung Tâm Điều Hành</div>
     </div>
 """, unsafe_allow_html=True)
 
@@ -360,7 +343,7 @@ with tab1:
         
         c_btn1, c_btn2 = st.columns(2)
         with c_btn1:
-            if st.button("🚀 Ghi Nhận Dữ Liệu", type="primary", use_container_width=True):
+            if st.button("🚀 Ghi Nhận Dữ Liệu", use_container_width=True):
                 if msg.strip():
                     count = parse_and_add_bets(name, msg)
                     if count > 0: 
@@ -490,7 +473,7 @@ with tab3:
     use_api = st.checkbox("Sử dụng dữ liệu tự động từ API trực tuyến", value=True)
     manual_res = st.text_input("Hoặc dán kết quả thủ công", value="")
 
-    if st.button("⚡ Chạy Đối Chiếu & Tính Toán", type="primary"):
+    if st.button("⚡ Chạy Đối Chiếu & Tính Toán"):
         with st.spinner("Đang đối chiếu dữ liệu..."):
             res_2d = []
             so_de = ""
