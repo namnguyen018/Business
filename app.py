@@ -12,7 +12,7 @@ st.set_page_config(page_title="Hệ Thống Forecast Chứng Khoán & Tài Chín
 if 'authenticated' not in st.session_state:
     st.session_state.authenticated = False
 
-# --- MÀN HÌNH ĐĂNG NHẬP HIGH-TECH ---
+# --- MÀN HÌNH ĐĂNG NHẬP VỚI VIDEO NỀN HIGH-TECH ---
 if not st.session_state.authenticated:
     st.markdown("""
         <style>
@@ -21,11 +21,29 @@ if not st.session_state.authenticated:
         header {visibility: hidden;}
         
         .stApp {
-            background: linear-gradient(rgba(3, 7, 18, 0.75), rgba(3, 7, 18, 0.85)), 
-                        url('https://images.unsplash.com/photo-1639762681485-074b7f938ba0?auto=format&fit=crop&w=1920&q=80');
-            background-size: cover;
-            background-position: center;
-            background-attachment: fixed;
+            background: transparent;
+        }
+        
+        /* Video nền động full màn hình */
+        .bg-video {
+            position: fixed;
+            right: 0;
+            bottom: 0;
+            min-width: 100%;
+            min-height: 100%;
+            object-fit: cover;
+            z-index: -1;
+        }
+        
+        /* Lớp phủ tối mờ để nổi bật khung đăng nhập */
+        .video-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(3, 7, 18, 0.75);
+            z-index: -1;
         }
 
         .login-container {
@@ -34,6 +52,8 @@ if not st.session_state.authenticated:
             align-items: center;
             justify-content: center;
             margin-top: 4vh;
+            position: relative;
+            z-index: 10;
         }
 
         .login-card {
@@ -77,6 +97,12 @@ if not st.session_state.authenticated:
         }
         </style>
 
+        <!-- Video nền công nghệ cao chạy động -->
+        <video autoplay muted loop playsinline class="bg-video">
+            <source src="https://assets.mixkit.co/videos/preview/mixkit-digital-animation-of-screens-with-code-and-graphs-31915-large.mp4" type="video/mp4">
+        </video>
+        <div class="video-overlay"></div>
+
         <div class="login-container">
             <div class="login-card">
                 <div class="login-title">📈 Hệ thống forecast chứng khoán</div>
@@ -108,7 +134,6 @@ if not st.session_state.authenticated:
 # TRANG CHÍNH SAU KHI ĐĂNG NHẬP THÀNH CÔNG
 # ==========================================
 
-# CSS tùy chỉnh giao diện ứng dụng chính
 st.markdown("""
     <style>
     div.stButton > button:first-child {
@@ -146,7 +171,6 @@ def save_data_to_file():
 if 'bets' not in st.session_state: 
     st.session_state.bets = load_saved_data()
 
-# Cấu hình tài chính
 LO_REV, LO_PAY, DE_PAY, BC_PAY, X2_PAY, X3_PAY = 22500, 80000, 70, 400, 10, 40
 
 def format_vnd(val): return f"{val:,.0f}".replace(',', '.') + ' đ'
@@ -157,7 +181,6 @@ def parse_and_add_bets(customer_name, message_text):
         line = line.strip().lower()
         if not line: continue
         
-        # 1. Dạng nhiều cặp xiên chung tiền trên 1 dòng
         if ',' in line and '-' in line and 'xiên' in line:
             m_amt = re.search(r'(\d+)(k)?$', line)
             if m_amt:
@@ -169,7 +192,6 @@ def parse_and_add_bets(customer_name, message_text):
                     added_count += 1
                 continue
 
-        # 2. Dạng Lô cặp gạch ngang có chung số điểm
         m_pair_lo = re.match(r'^(\d{2})\s*-\s*(\d{2})\s+(\d+)\s*(đ|diem)?$', line)
         if m_pair_lo:
             n1, n2, pts = m_pair_lo.group(1), m_pair_lo.group(2), int(m_pair_lo.group(3))
@@ -178,7 +200,6 @@ def parse_and_add_bets(customer_name, message_text):
                 added_count += 1
             continue
 
-        # 3. Dạng chuỗi 3 chữ số liên tiếp kèm tiền cuối
         m_group_3d = re.search(r'^((?:\d{3}\s*)+)(\d+)\s*(k)?(?:\s*đề)?$', line)
         if m_group_3d:
             nums_str = m_group_3d.group(1)
@@ -190,7 +211,6 @@ def parse_and_add_bets(customer_name, message_text):
                     added_count += 1
             continue
 
-        # 4. 3 Càng đơn lẻ
         m3c = re.search(r'3c\s*(\d{3})\s*(\d+)(k)?', line)
         if m3c:
             num, amt = m3c.group(1), int(m3c.group(2))
@@ -199,7 +219,6 @@ def parse_and_add_bets(customer_name, message_text):
             added_count += 1
             continue
 
-        # 5. Xiên 2 đơn lẻ
         mx2 = re.search(r'(?:xiên|x2)\s*2?\s+(\d{2})\D+(\d{2})\D*(\d+)(k)?', line)
         if mx2:
             num = f"{mx2.group(1)}-{mx2.group(2)}"
@@ -209,7 +228,6 @@ def parse_and_add_bets(customer_name, message_text):
             added_count += 1
             continue
 
-        # 6. Xiên 3
         mx3 = re.search(r'(?:xiên\s*3|x3)\s+(\d{2})\s+(\d{2})\s+(\d{2})\s*(\d+)(k)?', line)
         if mx3:
             num = f"{mx3.group(1)}-{mx3.group(2)}-{mx3.group(3)}"
@@ -219,7 +237,6 @@ def parse_and_add_bets(customer_name, message_text):
             added_count += 1
             continue
 
-        # 7. Đề đơn lẻ
         m_de = re.search(r'(?:đề|de)?\s*(\d{2})\s*(\d+)(k)', line)
         if m_de:
             num, amt = m_de.group(1), int(m_de.group(2)) * 1000
@@ -227,7 +244,6 @@ def parse_and_add_bets(customer_name, message_text):
             added_count += 1
             continue
 
-        # 8. Lô đơn lẻ hoặc Lô + Đề gộp
         tokens = line.split()
         nums = [t for t in tokens if re.match(r'^\d{2}$', t)]
         if nums:
@@ -267,14 +283,12 @@ st.image(
     caption="Smart Financial Analytics & Risk Management System"
 )
 
-# Nút đăng xuất tùy chọn ở sidebar
 with st.sidebar:
     st.write(f"👤 Đang đăng nhập: `spass122`")
     if st.button("🚪 Đăng xuất hệ thống"):
         st.session_state.authenticated = False
         st.rerun()
 
-# --- PHÂN CHIA GIAO DIỆN BẰNG TABS ---
 tab1, tab2, tab3 = st.tabs(["📥 Nhập liệu & Biểu đồ tổng quan", "📜 Quản lý công nợ khách hàng", "🏁 Đối chiếu kết quả & Lợi nhuận"])
 
 with tab1:
