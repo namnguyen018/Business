@@ -6,9 +6,92 @@ import json
 import os
 
 # --- CẤU HÌNH GIAO DIỆN ---
-st.set_page_config(page_title="Hệ Thống Quản Trị Rủi Ro Tài Chính", layout="wide")
+st.set_page_config(page_title="Hệ Thống Forecast Chứng Khoán & Tài Chính", layout="wide")
 
-# CSS tùy chỉnh giao diện sinh động và hiện đại hơn
+# Khởi tạo trạng thái đăng nhập trong session
+if 'authenticated' not in st.session_state:
+    st.session_state.authenticated = False
+
+# --- MÀN HÌNH ĐĂNG NHẬP HIGH-TECH ---
+if not st.session_state.authenticated:
+    # CSS tùy chỉnh cho màn hình đăng nhập với video/ảnh nền và hiệu ứng kính mờ (glassmorphism)
+    st.markdown("""
+        <style>
+        .stApp {
+            background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.7)), 
+                        url('https://images.unsplash.com/photo-1639762681485-074b7f938ba0?auto=format&fit=crop&w=1920&q=80');
+            background-size: cover;
+            background-position: center;
+        }
+        .login-card {
+            background: rgba(15, 23, 42, 0.75);
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            max-width: 450px;
+            margin: 80px auto;
+            text-align: center;
+        }
+        .login-title {
+            color: #ffffff;
+            font-size: 26px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            letter-spacing: 0.5px;
+        }
+        .login-subtitle {
+            color: #94a3b8;
+            font-size: 14px;
+            margin-bottom: 30px;
+        }
+        div.stButton > button:first-child {
+            width: 100%;
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        div.stButton > button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+        }
+        </style>
+        
+        <div class="login-card">
+            <div class="login-title">📈 Hệ thống forecast chứng khoán</div>
+            <div class="login-subtitle">Vui lòng xác thực quyền truy cập bảo mật cao</div>
+        </div>
+    """, unsafe_allow_html=True)
+
+    # Khung nhập thông tin đăng nhập nằm chính giữa màn hình
+    col_l1, col_l2, col_l3 = st.columns([1, 1.2, 1])
+    with col_l2:
+        with st.form("login_form"):
+            username_input = st.text_input("Tên đăng nhập", placeholder="Nhập tên đăng nhập...")
+            password_input = st.text_input("Mật khẩu", type="password", placeholder="Nhập mật khẩu...")
+            submit_login = st.form_submit_button("🔐 Xác Minh & Truy Cập")
+            
+            if submit_login:
+                if username_input == "spass122" and password_input == "Anhnam12@":
+                    st.session_state.authenticated = True
+                    st.toast("Đăng nhập thành công! Đang chuyển hướng...", icon="🚀")
+                    st.rerun()
+                else:
+                    st.error("❌ Tên đăng nhập hoặc mật khẩu không chính xác!")
+    
+    st.stop() # Dừng chạy các phần code phía dưới nếu chưa đăng nhập
+
+# ==========================================
+# TRANG CHÍNH SAU KHI ĐĂNG NHẬP THÀNH CÔNG
+# ==========================================
+
+# CSS tùy chỉnh giao diện ứng dụng chính
 st.markdown("""
     <style>
     div.stButton > button:first-child {
@@ -159,15 +242,20 @@ def parse_and_add_bets(customer_name, message_text):
         
     return added_count
 
-# --- TIÊU ĐỀ & BANNER CÔNG NGHỆ ---
+# --- TIÊU ĐỀ & BANNER CÔNG NGHỆ TRANG CHÍNH ---
 st.title("📊 Hệ Thống Quản Trị Rủi Ro Tài Chính")
-
-# Thêm banner công nghệ / tài chính hiện đại
 st.image(
     "https://images.unsplash.com/photo-1639762681485-074b7f938ba0?auto=format&fit=crop&w=1400&q=80",
     use_container_width=True,
     caption="Smart Financial Analytics & Risk Management System"
 )
+
+# Nút đăng xuất tùy chọn ở sidebar
+with st.sidebar:
+    st.write(f"👤 Đang đăng nhập: `spass122`")
+    if st.button("🚪 Đăng xuất hệ thống"):
+        st.session_state.authenticated = False
+        st.rerun()
 
 # --- PHÂN CHIA GIAO DIỆN BẰNG TABS ---
 tab1, tab2, tab3 = st.tabs(["📥 Nhập liệu & Biểu đồ tổng quan", "📜 Quản lý công nợ khách hàng", "🏁 Đối chiếu kết quả & Lợi nhuận"])
