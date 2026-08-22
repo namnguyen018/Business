@@ -431,17 +431,15 @@ with tab1:
                 df_chart = pd.DataFrame(chart_data)
                 df_chart = df_chart.sort_values("diem", ascending=False)
                 
-                # Gán màu sắc: Đỏ nếu payout >= 80% tổng thu lô, ngược lại màu Xanh dương (#3b82f6)
                 colors = []
                 for payout in df_chart["payout"]:
                     if total_lo_revenue > 0 and (payout >= total_lo_revenue * 0.8):
-                        colors.append("#ef4444") # Đỏ cảnh báo
+                        colors.append("#ef4444")
                     else:
-                        colors.append("#3b82f6") # Xanh dương
+                        colors.append("#3b82f6")
                 
                 df_chart["color"] = colors
                 
-                # Vẽ biểu đồ Altair với nền trong suốt (transparent) hòa hợp hoàn toàn với dark mode
                 chart = alt.Chart(df_chart).mark_bar(cornerRadiusTopLeft=4, cornerRadiusTopRight=4).encode(
                     x=alt.X('so:N', sort=None, title='Con Số Lô', axis=alt.Axis(labelColor='#cbd5e1', titleColor='#f3f4f6', labelAngle=0)),
                     y=alt.Y('payout:Q', title='Số Tiền Phải Trả (1 Nháy)', axis=alt.Axis(labelColor='#cbd5e1', titleColor='#f3f4f6', gridColor='rgba(255, 255, 255, 0.08)')),
@@ -716,8 +714,39 @@ with tab3:
 with tab4:
     st.subheader("💰 Quản Lý Doanh Thu & Lợi Nhuận Mảng Lô Theo Ngày")
     
+    # Form cập nhật/thêm thủ công doanh thu ngày cũ vào lịch sử tích lũy
+    with st.expander("🛠️ Bổ sung hoặc cập nhật thủ công lịch sử doanh thu ngày trước"):
+        with st.form("manual_rev_form"):
+            rc1, rc2 = st.columns(2)
+            with rc1:
+                input_hist_date = st.date_input("Chọn ngày", value=datetime.now())
+            with rc2:
+                input_hist_profit = st.number_input("Số tiền Lãi/Lỗ mảng Lô (VNĐ)", value=0, step=100000, format="%d")
+            
+            sub_manual = st.form_submit_button("💾 Lưu Lịch Sữ Ngày Này")
+            if sub_manual:
+                d_str = input_hist_date.strftime("%Y-%m-%d")
+                history = st.session_state.revenue_history
+                f_idx = -1
+                for idx, entry in enumerate(history):
+                    if entry['date'] == d_str:
+                        f_idx = idx
+                        break
+                
+                new_rec = {"date": d_str, "lo_profit": float(input_hist_profit)}
+                if f_idx >= 0:
+                    history[f_idx] = new_rec
+                    st.success(f"Đã cập nhật doanh thu cho ngày {d_str}!")
+                else:
+                    history.append(new_rec)
+                    st.success(f"Đã thêm mới doanh thu cho ngày {d_str}!")
+                
+                st.session_state.revenue_history = history
+                save_revenue_history(history)
+                st.rerun()
+
     if not st.session_state.revenue_history:
-        st.info("Chưa có lịch sử doanh thu lô nào được ghi nhận. Dữ liệu sẽ tự động lưu khi bạn thực hiện 'Đối Chiếu & Tính Toán' ở Tab 3.")
+        st.info("Chưa có lịch sử doanh thu nào được ghi nhận. Dữ liệu sẽ tự động lưu khi bạn thực hiện 'Đối Chiếu & Tính Toán' ở Tab 3 hoặc thêm thủ công ở trên.")
     else:
         sorted_history = sorted(st.session_state.revenue_history, key=lambda x: x['date'], reverse=True)
         
@@ -727,7 +756,9 @@ with tab4:
         
         df_rev = pd.DataFrame(sorted_history)
         df_rev['date_dt'] = pd.to_datetime(df_rev['date'])
-        df_rev = df_rev.sort_values('date_dt', ascending=False)
+        
+        # Sắp xếp tăng dần để vẽ biểu đồ trực quan xu hướng thời gian
+        df_rev_chart_sorted = df_rev.sort_values('date_dt', ascending=True)
         
         limit_days = None
         if "7" in cycle_option:
@@ -738,11 +769,11 @@ with tab4:
             limit_days = 30
             
         if limit_days:
-            max_date = df_rev['date_dt'].max()
+            max_date = df_rev_chart_sorted['date_dt'].max()
             min_date = max_date - pd.Timedelta(days=limit_days - 1)
-            df_filtered = df_rev[(df_rev['date_dt'] >= min_date)]
+            df_filtered = df_rev_chart_sorted[(df_rev_chart_sorted['date_dt'] >= min_date)]
         else:
-            df_filtered = df_rev
+            df_filtered = df_rev_chart_sorted
             
         total_cycle_profit = df_filtered['lo_profit'].sum()
         
@@ -754,9 +785,32 @@ with tab4:
             st.metric("Tổng Số Ngày Ghi Nhận", f"{len(df_filtered)} ngày")
             
         st.markdown("---")
-        st.subheader("📊 Bảng Chi Tiết Lãi/Lỗ Mảng Lô Theo Từng Ngày")
+        st.subheader("📈 Biểu Đồ Xu Hướng Lợi Nhuận Tích Lũy")
         
-        display_df = df_filtered[['date', 'lo_profit']].copy()
+        # Vẽ biểu đồ Altair tối ưu giao diện Dark Mode với nền trong suốt
+        chart_rev = alt.Chart(df_filtered).mark_bar(cornerRadiusTopLeft=4, cornerRadiusTopRight=4).encode(
+            x=alt.X('date:N', title='Ngày', axis=alt.Axis(labelColor='#cbd5e1', titleColor='#f3f4f6', labelAngle=0)),
+            y=alt.Y('lo_profit:Q', title='Lãi/Lỗ Mảng Lô (VNĐ)', axis=alt.Axis(labelColor='#cbd5e1', titleColor='#f3f4f6', gridColor='rgba(255, 255, 255, 0.08)')),
+            color=alt.condition(
+                alt.datum.lo_profit < 0,
+                alt.value('#ef4444'),  # Đỏ khi âm (lỗ)
+                alt.value('#00cc96')   # Xanh khi dương (lãi)
+            ),
+            tooltip=['date', 'lo_profit']
+        ).properties(
+            height=350
+        ).configure(
+            background='transparent',
+            view=alt.ViewConfig(stroke=None)
+        )
+        
+        st.altair_chart(chart_rev, use_container_width=True)
+        
+        st.markdown("---")
+        st.subheader("📊 Bảng Danh Sách Lịch Sử Doanh Thu Tích Lũy")
+        
+        # Đảo ngược lại để ngày mới nhất hiển thị lên đầu bảng
+        display_df = df_filtered.sort_values('date_dt', ascending=False)[['date', 'lo_profit']].copy()
         display_df.columns = ["Ngày", "Lãi/Lỗ Mảng Lô"]
         display_df["Lãi/Lỗ Mảng Lô"] = display_df["Lãi/Lỗ Mảng Lô"].apply(format_vnd)
         
