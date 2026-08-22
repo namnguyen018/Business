@@ -10,7 +10,7 @@ import altair as alt
 # --- CẤU HÌNH GIAO DIỆN ---
 st.set_page_config(page_title="Hệ Thống Quản Trị & Forecast Chứng Khoán", layout="wide")
 
-# --- CSS TOÀN CỤC ---
+# --- CSS TOÀN CỤC & FIX MÀU POPUP LỊCH ---
 st.markdown("""
     <style>
     #MainMenu {visibility: hidden;}
@@ -65,6 +65,29 @@ st.markdown("""
     .stTextInput input:focus, .stTextArea textarea:focus {
         border-color: #f59e0b !important;
         box-shadow: 0 0 8px rgba(245, 158, 11, 0.3) !important;
+    }
+
+    /* FIX MÀU POPUP LỊCH (DATE PICKER) KHÔNG BỊ TRẮNG XÓA */
+    div[data-baseweb="popover"], div[data-baseweb="calendar"], [class*="rdp"] {
+        background-color: #1e293b !important;
+        color: #ffffff !important;
+        border: 1px solid rgba(245, 158, 11, 0.4) !important;
+        border-radius: 8px !important;
+    }
+    div[data-baseweb="calendar"] button, div[data-baseweb="calendar"] div, [class*="rdp"] button {
+        color: #f3f4f6 !important;
+    }
+    div[data-baseweb="calendar"] button:hover {
+        background-color: #f59e0b !important;
+        color: #111827 !important;
+    }
+    /* Các ngày trong lịch / tuần */
+    [role="gridcell"] button {
+        color: #ffffff !important;
+    }
+    [role="gridcell"] button[aria-selected="true"] {
+        background-color: #ef4444 !important;
+        color: #ffffff !important;
     }
 
     .top-nav {
@@ -714,7 +737,6 @@ with tab3:
 with tab4:
     st.subheader("💰 Quản Lý Doanh Thu & Lợi Nhuận Mảng Lô Theo Ngày")
     
-    # Form cập nhật/thêm thủ công doanh thu ngày cũ vào lịch sử tích lũy
     with st.expander("🛠️ Bổ sung hoặc cập nhật thủ công lịch sử doanh thu ngày trước"):
         with st.form("manual_rev_form"):
             rc1, rc2 = st.columns(2)
@@ -757,7 +779,6 @@ with tab4:
         df_rev = pd.DataFrame(sorted_history)
         df_rev['date_dt'] = pd.to_datetime(df_rev['date'])
         
-        # Sắp xếp tăng dần để vẽ biểu đồ trực quan xu hướng thời gian
         df_rev_chart_sorted = df_rev.sort_values('date_dt', ascending=True)
         
         limit_days = None
@@ -787,14 +808,13 @@ with tab4:
         st.markdown("---")
         st.subheader("📈 Biểu Đồ Xu Hướng Lợi Nhuận Tích Lũy")
         
-        # Vẽ biểu đồ Altair tối ưu giao diện Dark Mode với nền trong suốt
         chart_rev = alt.Chart(df_filtered).mark_bar(cornerRadiusTopLeft=4, cornerRadiusTopRight=4).encode(
             x=alt.X('date:N', title='Ngày', axis=alt.Axis(labelColor='#cbd5e1', titleColor='#f3f4f6', labelAngle=0)),
             y=alt.Y('lo_profit:Q', title='Lãi/Lỗ Mảng Lô (VNĐ)', axis=alt.Axis(labelColor='#cbd5e1', titleColor='#f3f4f6', gridColor='rgba(255, 255, 255, 0.08)')),
             color=alt.condition(
                 alt.datum.lo_profit < 0,
-                alt.value('#ef4444'),  # Đỏ khi âm (lỗ)
-                alt.value('#00cc96')   # Xanh khi dương (lãi)
+                alt.value('#ef4444'),
+                alt.value('#00cc96')
             ),
             tooltip=['date', 'lo_profit']
         ).properties(
@@ -809,7 +829,6 @@ with tab4:
         st.markdown("---")
         st.subheader("📊 Bảng Danh Sách Lịch Sử Doanh Thu Tích Lũy")
         
-        # Đảo ngược lại để ngày mới nhất hiển thị lên đầu bảng
         display_df = df_filtered.sort_values('date_dt', ascending=False)[['date', 'lo_profit']].copy()
         display_df.columns = ["Ngày", "Lãi/Lỗ Mảng Lô"]
         display_df["Lãi/Lỗ Mảng Lô"] = display_df["Lãi/Lỗ Mảng Lô"].apply(format_vnd)
